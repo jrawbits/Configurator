@@ -13,7 +13,7 @@ tools = ["tool_config"]
 
 tool_config = {
     "info" : {
-        "name" : "Tool Configurator"
+        "name" : "Tool Configurator",
         "text" : """
 The "Configurator" is the place to begin if you're trying to figure
 out how to build an interface description for a Non-Motorized Toolkit
@@ -80,7 +80,7 @@ useful information to the NMTK explaining what it is going to return.
 And it lets you give the user some ability to shape how the results
 are presented, for example by specifying alternate names for the
 result fields returned. 
-"""
+""",
         "version" : "1.0"
     },
     "documentation" : {
@@ -88,9 +88,9 @@ result fields returned.
               {
                 "url":"http://github.com/jrawbits/Configurator",
                 "title":"Visit the Configurator on Github"
-              }
+              },
               {
-                "url":"http://nmtk.jeremyraw.com/config/Configurator",
+                "url":"http://nmtk.jeremyraw.com/Configurator/config",
                 "title":"See the Configurator's raw configuration file"
               }
         ],
@@ -99,7 +99,8 @@ result fields returned.
                 "name" : "Tool Interface Specification (.docx)",
                 "url" : "/static/Configurator/docs/ToolSpec_2015-07-31.docx",
                 "mimetype" : "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            ]
+            }
+        ]
     },
 # The sample section should be developed after the input and output
 # sections
@@ -116,7 +117,7 @@ result fields returned.
 #         """
 #     },
     "input" : [
-        "data" : {
+        {
             "description" :
 """
 Data elements that will be transformed using the factors
@@ -138,11 +139,11 @@ Data elements that will be transformed using the factors
             "label" : "Input data",
             "spatial_types" : ["POLYGON","POINT","LINE"]
         },
-        "factors" : {
+        {
             "description" :
 """
 Factors that will transform the supplied data
-"""
+""",
             "elements" : [
               {
                   "description" : "The data will be raised to this power.",
@@ -167,12 +168,12 @@ You may override the default field name in which results from this
 tool are reported by entering a different name here.  The name you
 enter may be adjusted so it is not the same as any fields already in
 your input data.
-"""
+""",
         "elements":[
           {
             "description":"Field name that will contain the computed result",
             "default":"Root",
-            "required":true,
+            "required":True,
             "label":"Result Field",
             "type":"string",
             "name":"result"
