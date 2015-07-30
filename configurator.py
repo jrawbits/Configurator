@@ -93,43 +93,96 @@ result fields returned.
                 "url":"http://nmtk.jeremyraw.com/config/Configurator",
                 "title":"See the Configurator's raw configuration file"
               }
-              {
-                "url":"http://github.com/jrawbits/Configurator",
-                "title":"Visit the Configurator on Github"
-              }
-              {
-                # this is probably wrong: we want to serve stuff from
-                # the tool server itself - the Tool Configuration and
-                # API documents, and the document on writing a tool
-                "document":"http://github.com/jrawbits/Configurator",
-                "title":"Visit the Configurator on Github"
-              }
         ],
+        "docs" : [
+            {
+                "name" : "Tool Interface Specification (.docx)",
+                "url" : "/static/Configurator/docs/ToolSpec_2015-07-31.docx",
+                "mimetype" : "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            ]
     },
-    "sample" : {
-        "files" : {
-            # just one sample file that can provide the necessary
-            # pieces for a batch job
-        },
-        "config" : {
-            # A config that will use the sample file (or not)
-        }
-        "description" : """
-Sample Configurator job.
-        """
-    },
+# The sample section should be developed after the input and output
+# sections
+#    "sample" : {
+#        "files" : {
+#            # just one sample file that can provide the necessary
+#             # pieces for a batch job
+#         },
+#         "config" : {
+#             # A config that will use the sample file (or not)
+#         }
+#         "description" : """
+# Sample Configurator job.
+#         """
+#     },
     "input" : [
-        # need to exercise multiple namespaces, and in the sample
-        # one will have a file and the other won't (by default)
-        # though files will be available for each.
-        # Exercise data types, constants, defaults, required values
-        # conditional display of fields, properties
-    ] 
+        "data" : {
+            "description" :
+"""
+Data elements that will be transformed using the factors
+""",
+            "elements" : [
+              {
+                  "description" : "The data that will be raised to a power.",
+                  "default" : 3,
+                  "required" : True,
+                  "label" : "Data to Empower",
+                  "type" : "number",
+                  "name" : "raiseme"
+              },
+            ],
+            "type" : "File",
+            "name" : "data",
+            "namespace" : "data",
+            "primary" : True,
+            "label" : "Input data",
+            "spatial_types" : ["POLYGON","POINT","LINE"]
+        },
+        "factors" : {
+            "description" :
+"""
+Factors that will transform the supplied data
+"""
+            "elements" : [
+              {
+                  "description" : "The data will be raised to this power.",
+                  "default" : 2,
+                  "required" : True,
+                  "label" : "Power to Raise",
+                  "type" : "number",
+                  "name" : "power"
+              },
+            ],
+            "type" : "ConfigurationPage",
+            "name" : "factors",
+            "namespace" : "factors",
+            "label" : "Factors",
+            "expanded" : True,
+            }
+    ], 
     "output" : [
-        # Namespaces on the output
-        # Let the user rename a field
-        # Let the user choose whether to return certain fields or not
-    ]
+      {
+        "description":"""
+You may override the default field name in which results from this
+tool are reported by entering a different name here.  The name you
+enter may be adjusted so it is not the same as any fields already in
+your input data.
+"""
+        "elements":[
+          {
+            "description":"Field name that will contain the computed result",
+            "default":"Root",
+            "required":true,
+            "label":"Result Field",
+            "type":"string",
+            "name":"result"
+          }
+        ],
+        "type":"ConfigurationPage",
+        "name":"perfeature",
+        "label":"Individual Results"
+      }
+    ],
 }
 
 for tool_name in tools:
