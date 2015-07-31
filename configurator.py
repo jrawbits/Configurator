@@ -64,7 +64,7 @@ In short, the Configurator is your gateway to doing cool stuff with
 the Non-Motorized Toolkit!</li>
 </ol>
 
-The real action happens in the remaining two sections:
+<p>The real action happens in the remaining two sections:</p>
 
 <ol start="4">
 <li>The <strong>"input"</strong> section describes what the user has to
