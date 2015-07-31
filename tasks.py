@@ -5,7 +5,7 @@ from NMTK_apps.helpers.config_iterator import ConfigIterator
 import datetime
 
 # For this specific tool, we import the following helpers
-import confighelper as cfHelper
+import confighelpers as cfHelper
 from collections import namedtuple
 import decimal
 import math
