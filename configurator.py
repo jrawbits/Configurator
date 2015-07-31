@@ -191,6 +191,9 @@ your input data.
     ],
 }
 
+# Written outside a function, the following will run when the module
+# loads, and it will have the effect of generating the JSON
+# configuration and placing the file where we can find it.
 for tool_name in tools:
     print "Configurating tool %s"%(tool_name,)
     tool_data = eval(tool_name)
