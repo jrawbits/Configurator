@@ -181,6 +181,7 @@ your input data.
         ],
         "type":"ConfigurationPage",
         "name":"perfeature",
+        "namespace":"perfeature",
         "label":"Individual Results"
       }
     ],
