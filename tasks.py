@@ -50,9 +50,9 @@ def performModel(input_files,
             else:
                 # Extract the parameters
                 parameters=factor_iterator.data
-                factor = parameters.get('factor')
-                logger.debug("'factor' is %s",factor)
-                factor = decimal.Decimal(str(factor))
+                power = parameters.get('power')
+                logger.debug("'power' is %s",power)
+                power = decimal.Decimal(str(power))
 
             # Check that the required fields are defined for the
             # input data (based on tool_config)
@@ -66,9 +66,9 @@ def performModel(input_files,
                 for field, value in row.iteritems():
                     logger.debug("Adding field %s"%(pyResult,))
                     value = decimal.Decimal(str(value))
-                    result = value ** factor
-                    logger.debug("Computed result %s of value %s ** factor %s"%(result,value,factor))
-                    file_iterator.addResult(pyResult, value ** factor)    
+                    result = value ** power
+                    logger.debug("Computed result %s of value %s ** power %s"%(result,value,power))
+                    file_iterator.addResult(pyResult, value ** power)    
                     fldnum += 1
                 numcomp += fldnum
             client.updateStatus
@@ -109,13 +109,3 @@ def performModel(input_files,
             
         
     cfHelper.cleanUp(input_files)
-
-def addCol(arr, col, factor):
-    return recfuntions.append_fields(arr,col,np.ones(len(arr))*factor,usemask=False)
-
-def addStrCol(arr, col):
-    return recfuntions.append_fields(arr,col,np.repeat('',len(arr)),dtypes='|S50',usemask=False)
-
-def getRangeLabel(label, minval, maxval):
-    return label + ' [' + str(minval) + ', ' + str(maxval) + ']'
-    
