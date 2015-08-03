@@ -51,6 +51,7 @@ def performModel(input_files,
                 # Extract the parameters
                 parameters=factor_iterator.data
                 factor = parameters.get('factor')
+                factor = decimal.Decimal(str(factor))
 
             # Check that the required fields are defined for the
             # input data (based on tool_config)
@@ -62,9 +63,15 @@ def performModel(input_files,
                 numrecs += 1
                 fldnum = 0
                 for field, value in row.iteritems():
+                    logger.debug("Adding field %s"%(pyResult,))
+                    value = decimal.Decimal(str(value))
+                    result = value ** factor
+                    logger.debug("Computed result %s of value %s ** factor %s"%(result,value,factor))
                     file_iterator.addResult(pyResult, value ** factor)    
                     fldnum += 1
                 numcomp += fldnum
+            client.updateStatus
+            logger.debug("Done computing results.")
 
             client.updateStatus('Completed computations.')
 
@@ -74,6 +81,7 @@ def performModel(input_files,
             summ_text = 'Description,Value'
             summ_text += '\r\n' + 'Number of records,' + str(numrecs)
             summ_text += '\r\n' + 'Number of computations,' + str(numcomp)
+            logger.debug("Summary text %s"%(summ_text,))
                 
         except Exception, e:
             # if anything goes wrong we'll send over a failure status.
