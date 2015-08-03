@@ -51,6 +51,7 @@ def performModel(input_files,
                 # Extract the parameters
                 parameters=factor_iterator.data
                 factor = parameters.get('factor')
+                logger.debug("'factor' is %s",factor)
                 factor = decimal.Decimal(str(factor))
 
             # Check that the required fields are defined for the
@@ -107,7 +108,7 @@ def performModel(input_files,
                                 })
             
         
-    cfHelpers.cleanUp(input_files)
+    cfHelper.cleanUp(input_files)
 
 def addCol(arr, col, factor):
     return recfuntions.append_fields(arr,col,np.ones(len(arr))*factor,usemask=False)
