@@ -29,6 +29,10 @@ def performModel(input_files,
     logger.debug('Job input files are: %s', input_files)
 
     try:
+        logger.debug("Task parameters follow:")
+        logger.debug("input_files: %s"%(input_files,))
+        logger.debug("tool_config"%(tool_config,))
+        logger.debug("subtool_name"%(tool_config,))
         (setup,failures) = cfHelper.loadSetup(input_files)
         file_iterator=ConfigIterator(input_files, 'data', setup)
     except:
