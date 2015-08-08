@@ -26,11 +26,11 @@ def performModel(input_files,
     logger=performModel.get_logger()
     logger.debug('Job input files are: %s', input_files)
 
+    failures = []
     try:
         logger.debug("Task parameters follow:")
         logger.debug("input_files: %s"%(input_files,))
-        logger.debug("tool_config"%(tool_config,))
-        logger.debug("subtool_name"%(tool_config,))
+        logger.debug("tool_config %s"%(tool_config,))
         (setup,failures) = cfHelper.loadSetup(input_files)
         file_iterator=ConfigIterator(input_files, 'data', setup)
     except:
