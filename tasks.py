@@ -7,7 +7,7 @@ import datetime
 # For this specific tool, we import the following helpers
 import confighelpers as cfHelper
 import decimal
-import pyRServe
+import pyRserve
 
 import logging
 logger=logging.getLogger(__name__)
