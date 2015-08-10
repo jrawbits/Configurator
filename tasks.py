@@ -30,9 +30,9 @@ def performModel(input_files,
     try:
         logger.debug("Task parameters follow:")
         logger.debug("input_files: %s"%(input_files,))
-        logger.debug("tool_config %s"%(tool_config,))
+        logger.debug("tool_config\n%s\n"%(tool_config,))
         (setup,failures) = cfHelper.loadSetup(input_files)
-        logger.debug("setup %s"%(setup,))
+        logger.debug("setup\n%s\n"%(setup,))
         file_iterator=ConfigIterator(input_files, 'data', setup)
     except:
         logger.exception('Failed to parse config file or data file.')
