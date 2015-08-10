@@ -19,7 +19,7 @@ def performModel(input_files,
                  subtool_name=False):
     '''
     input_files is the set of data to analyze from the NMTK server
-    tool_config is the "analysis_settings" part of the input
+    tool_config is the "header" part of the input
     client is an object of type NMTK_apps.helpers.server_api.NMTKClient
     subtool_name is provided if the tool manages multiple configurations
     '''
