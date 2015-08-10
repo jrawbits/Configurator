@@ -19,8 +19,8 @@ def performModel(input_files,
                  subtool_name=False):
     '''
     input_files is the set of data to analyze from the NMTK server
-    tool_config is is the configuration (loaded by the tool server)
-    client is an object linking back to the NMTK server
+    tool_config is the "analysis_settings" part of the input
+    client is an object of type NMTK_apps.helpers.server_api.NMTKClient
     subtool_name is provided if the tool manages multiple configurations
     '''
     logger=performModel.get_logger()
@@ -32,6 +32,7 @@ def performModel(input_files,
         logger.debug("input_files: %s"%(input_files,))
         logger.debug("tool_config %s"%(tool_config,))
         (setup,failures) = cfHelper.loadSetup(input_files)
+        logger.debug("setup %s"%(setup,))
         file_iterator=ConfigIterator(input_files, 'data', setup)
     except:
         logger.exception('Failed to parse config file or data file.')
