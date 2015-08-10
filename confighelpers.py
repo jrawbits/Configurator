@@ -12,6 +12,7 @@ def loadSetup(input_files, failures=[]):
     input_files is the block of posted job configuration data from the NMTK server
     failures is a list of strings describing errors that might be returned
     """
+    setup = ""
     try:
         setup=json.loads(open(input_files['config'][0]).read()).get('analysis settings',{})
         if (not isinstance(setup, (dict))):
