@@ -47,6 +47,8 @@ def performModel(input_files,
         client.updateStatus('Parameter & data file validation complete.')
         summ_text = ''
         try:
+            client.updateStatus('Starting R Server')
+            R = pyRserve.connect()
             factor_iterator=ConfigIterator(input_files, 'factors', setup)
             if factor_iterator.iterable:
                 raise Exception('Factors cannot be iterable')
@@ -55,26 +57,40 @@ def performModel(input_files,
                 parameters=factor_iterator.data
                 power = parameters.get('power')
                 logger.debug("'power' is %s",power)
-                power = decimal.Decimal(str(power))
 
             # Check that the required fields are defined for the
             # input data (based on tool_config)
 
             numrecs = 0
             numcomp = 0
-            pyResult = setup['perfeature']['result']['value']
+
+            pyResultField = setup['perfeature']['python_result']['value']
+            RResultField = setup['perfeature']['r_result']['value']
+
+            pyPower = decimal.Decimal(str(power))
+            R.r.power = power # Warning: everyting arrives in the tool as a string
+
+            client.updateStatus('Setup complete, starting calculations')
+
             for row in file_iterator: # Loop over the rows in the input file
                 numrecs += 1
                 fldnum = 0
                 for field, value in row.iteritems():
-                    logger.debug("Adding field %s"%(pyResult,))
-                    value = decimal.Decimal(str(value))
-                    result = value ** power
-                    logger.debug("Computed result %s of value %s ** power %s"%(result,value,power))
-                    file_iterator.addResult(pyResult, value ** power)    
+                    logger.debug("Adding Python field %s"%(pyResultField,))
+                    pyValue = decimal.Decimal(str(value))
+                    pyResult = pyValue ** pyPower
+                    logger.debug("Computed Python result %s of value %s ** power %s"%(pyResult,pyValue,pyPower))
+                    file_iterator.addResult(pyResultField, pyResult)    
+                    fldnum += 1
+
+                    logger.debug("Adding R field %s"%(RResultField,))
+                    R.r.value = value
+                    R.voidEval('result <- as.numeric(value) ** as.numeric(power)')
+                    logger.debug("Computed R result %s of value %s ** power %s"%(R.r.result,R.r.value,R.r.power))
+                    file_iterator.addResult(RResultField,R.r.result)    
                     fldnum += 1
                 numcomp += fldnum
-            client.updateStatus
+            client.updateStatus('Done with calculations')
             logger.debug("Done computing results.")
 
             client.updateStatus('Completed computations.')
@@ -93,6 +109,9 @@ def performModel(input_files,
             logger.exception('Job Failed with Exception!')
             client.updateResults(payload={'errors': [str(e),] },
                                  failure=True)
+        finally:
+            del R
+
         # Since we are updating the data as we go along, we just need to return
         # the data with the new column (results) which contains the result of the 
         # model.

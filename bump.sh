@@ -9,3 +9,5 @@ sudo truncate -s 0 /var/www/nmtk/logs/celeryd-nmtk.log
 sleep 10
 sudo service apache2 start
 sudo service celeryd-nmtk start
+source ../../venv/bin/activate
+sudo python ../manage.py discover_tools

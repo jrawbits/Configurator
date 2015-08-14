@@ -226,12 +226,20 @@ your input data.
 """,
         "elements":[
           {
-            "description":"Field name that will contain the computed result",
-            "default":"Root",
+            "description":"Field name that will contain the result computed by Python",
+            "default":"PowerPython",
             "required":True,
-            "label":"Result Field",
+            "label":"Python Result Field",
             "type":"string",
-            "name":"result"
+            "name":"python_result"
+          },
+          {
+            "description":"Field name that will contain the result computed by R",
+            "default":"PowerR",
+            "required":True,
+            "label":"R Result Field",
+            "type":"string",
+            "name":"r_result"
           }
         ],
         "type":"ConfigurationPage",
