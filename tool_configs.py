@@ -186,6 +186,14 @@ Data elements that will be transformed using the factors
                   "type" : "number",
                   "name" : "raiseme"
               },
+              {
+                  "description" : "A boolean entry value",
+                  "default" : 1,
+                  "required" : False,
+                  "label" : "Check out this box!",
+                  "type" : "boolean",
+                  "name" : "checkitout"
+              },
             ],
             "type" : "File",
             "name" : "data",

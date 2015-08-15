@@ -93,8 +93,6 @@ def performModel(input_files,
             client.updateStatus('Done with calculations')
             logger.debug("Done computing results.")
 
-            client.updateStatus('Completed computations.')
-
             #Write out a summary file for the run
             #Number of records processed, string comparison between the
             #different styles out to ten decimal places
