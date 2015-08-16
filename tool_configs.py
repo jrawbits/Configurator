@@ -194,6 +194,15 @@ Data elements that will be transformed using the factors
                   "type" : "boolean",
                   "name" : "checkitout"
               },
+              {
+                  "description" : "A set of choices",
+                  "default" : "impossible",
+                  "required" : True,
+                  "label" : "Check out this box!",
+                  "type" : "string",
+                  "name" : "choices",
+                  "choices" : [ "no-brainer","easy","hard","impossible"],
+              },
             ],
             "type" : "File",
             "name" : "data",

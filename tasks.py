@@ -12,6 +12,11 @@ import pyRserve
 import logging
 logger=logging.getLogger(__name__)
 
+def getPythonValue(value,power):
+    pass
+def getRValue(value,power):
+    pass
+
 @task(ignore_result=False)
 def performModel(input_files,
                  tool_config,
@@ -68,7 +73,7 @@ def performModel(input_files,
             RResultField = setup['perfeature']['r_result']['value']
 
             pyPower = decimal.Decimal(str(power))
-            R.r.power = power # Warning: everyting arrives in the tool as a string
+            R.r.rpower = power # Warning: everyting arrives in the tool as a string
 
             client.updateStatus('Setup complete, starting calculations')
 
@@ -77,19 +82,31 @@ def performModel(input_files,
                 fldnum = 0
                 for field, value in row.iteritems():
                     logger.debug("Adding Python field %s"%(pyResultField,))
-                    pyValue = decimal.Decimal(str(value))
-                    pyResult = pyValue ** pyPower
+                    try:
+                        pyValue = decimal.Decimal(str(value))
+                    except:
+                        pyValue = decimal.Decimal.from_float(float('nan'))
+                    if not pyValue.is_nan():
+                        pyResult = pyValue ** pyPower
+                    else:
+                        pyResult = "NaN-Python"
                     logger.debug("Computed Python result %s of value %s ** power %s"%(pyResult,pyValue,pyPower))
-                    file_iterator.addResult(pyResultField, pyResult)    
+                    file_iterator.addResult(pyResultField+"_"+field, pyResult)    
                     fldnum += 1
 
                     logger.debug("Adding R field %s"%(RResultField,))
                     R.r.value = value
-                    R.voidEval('result <- as.numeric(value) ** as.numeric(power)')
+                    # The JSON parser (used in displaying NMTK results) chokes on a NaN returned directly from R
+                    # becauce is doesn't recognize an unquoted NaN as numeric and sses it as a string without quotes
+                    R.voidEval('''
+result <- as.numeric(value) ** as.numeric(rpower)
+if (is.nan(result)||is.na(result)) result<-"Nan-R"
+''')
                     logger.debug("Computed R result %s of value %s ** power %s"%(R.r.result,R.r.value,R.r.power))
-                    file_iterator.addResult(RResultField,R.r.result)    
+                    file_iterator.addResult(RResultField+"_"+field,R.r.result)    
                     fldnum += 1
                 numcomp += fldnum
+
             client.updateStatus('Done with calculations')
             logger.debug("Done computing results.")
 
