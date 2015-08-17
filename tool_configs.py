@@ -149,13 +149,6 @@ result fields returned.</li>
                 "title":"See the Configurator's raw configuration file"
               }
         ],
-        "docs" : [
-            {
-                "name" : "Tool Interface Specification (.docx)",
-                "url" : "/static/Configurator/docs/ToolSpec_2015-07-31.docx",
-                "mimetype" : "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-            }
-        ]
     },
 # The sample section should be developed after the input and output
 # sections
