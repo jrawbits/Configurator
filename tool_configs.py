@@ -61,14 +61,15 @@ def generateToolConfiguration(tool,sub_tool=None):
 
 # The master configuration for this particular tool that works with
 # the implementation of the generateToolConfiguration function
-# is defined in the following Python dictionary.
+# is defined in the following Pdython dictionary.
 tool_config = {
     "info" : {
         "name" : "Tool Configurator",
-# The text is HTML-formatted text that describes the tool.  The focus
-# here should be the tool implementation itself.  If you want to get into
-# background or computational methods, you should use the Documentation
-# links to direct the user to a paper, a website or some other source.
+# The text is HTML-formatted text that describes the tool.  The focus here
+# should be the tool implementation itself (i.e. what people have to know to
+# make use of the tool).  If you want to get into background or computational
+# methods, you should use the Documentation links to direct the user to a paper,
+# a website or some other source.
         "text" : """
 <p>The "Configurator" is the place to begin if you're trying to figure out how
 to build an interface description for a Non-Motorized Toolkit (NMTK) tool(what
@@ -155,6 +156,11 @@ of result fields or what result types they should expect.</li>
                 "url":"http://nmtk.jeremyraw.com/Configurator/config",
                 "title":"See the Configurator's raw configuration file"
               }
+        ],
+        "docs" : [
+            "uri" : "ToolSpec_2015-07-31.docx",
+            "mimetype" : "",
+            "name" : "Tool Configuration Specification",
         ],
     },
 # The sample section should be developed after the input and output
