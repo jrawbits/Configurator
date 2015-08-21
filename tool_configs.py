@@ -158,7 +158,7 @@ of result fields or what result types they should expect.</li>
               }
         ],
         "docs" : [
-            "uri" : "ToolSpec_2015-07-31.docx",
+            "url" : "ToolSpec_2015-07-31.docx",
             "mimetype" : "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             "name" : "Tool Configuration Specification",
         ],
@@ -230,9 +230,9 @@ Data elements that will be transformed using the factors
             ],
         },
         {
-            "type" : "File",              # Elements that can be read in multiple rows from a file
-            "name" : "computation",       # 'name' and 'namespace' are probably redundant
-            "namespace" : "computation",
+            "type" : "File",            # Elements that can be read in multiple rows from a file
+            "name" : "rasterize",       # 'name' and 'namespace' are probably redundant
+            "namespace" : "rasterize",
             "description" :
 """
 Data file that will be used for rasterization (must be spatial)
