@@ -233,8 +233,8 @@ Data file that will be used for rasterization (must be spatial)
 """,
             "primary" : False,            # True if...
             "label" : "Data used for rasterization",
-            "spatial_types" : ["POLYGON","POINT","LINE"] # require specific spatial types
-            # "required" : True           # If true, an actual file must be provided
+            "spatial_types" : ["POLYGON","POINT","LINE"], # require specific spatial types
+            # "required" : True,           # If true, an actual file must be provided
             "elements" : [
               {
                   "description" : """
@@ -251,7 +251,7 @@ The value to be assigned to raster cells coinciding with the feature.  May be a 
         {
             "type" : "ConfigurationPage",  # Elements that are provided as a single instance (global)
             "name" : "computation_params",
-            "namespace" : "computation_params,
+            "namespace" : "computation_params",
             "description" :
 """
 Parameters that control what will be done with the computation data.
@@ -277,11 +277,11 @@ Parameters that control what will be done with the computation data.
                   "name" : "computetype"
               },
             ],
-        }
+        },
         {
             "type" : "ConfigurationPage",  # Elements that are provided as a single instance (global)
             "name" : "rasterization_params",
-            "namespace" : "rasterization_params,
+            "namespace" : "rasterization_params",
             "description" :
 """
 Parameters that control how rasterization will be performed.
@@ -333,7 +333,7 @@ Parameters that control how rasterization will be performed.
                   "name" : "smoothing"
               },
             ],
-        }
+        },
         {
             "type" : "ConfigurationPage",  # Elements that are provided as a single instance (global)
             "name" : "imaging_params",
@@ -376,7 +376,7 @@ a default raster will be imaged.
         "type":"ConfigurationPage",
         "name":"computation_output",
         "namespace":"computation_output",
-        "label":"Computation Field Names"
+        "label":"Computation Field Names",
         "description":"""
 You may supply alternate base names for the result fields used to hold the computations performed.
 """,
@@ -407,7 +407,7 @@ Base field name for results computed by R (the input field name will be appended
         "type":"ConfigurationPage",
         "name":"rasterization_output",
         "namespace":"rasterization_output",
-        "label":"Rasterization Outputs"
+        "label":"Rasterization Outputs",
         "description":"""
 You can force certain rasterization output to occur, regardless of whether you actually attempted rasterization.
 The boolean parameters below will control what is returned.
@@ -442,7 +442,7 @@ to
         "type":"ConfigurationPage",
         "name":"image_output",
         "namespace":"image_output",
-        "label":"Image Output"
+        "label":"Image Output",
         "description":"""
 If you requested images, you can set the format that will be returned here from a list of supported types (plus
 one unsupported type that can be downloaded but not viewed).
@@ -454,7 +454,7 @@ Select the output format for the image versions of shapefiles or rasters that yo
 will be generated in the same format.
 """,
             "default":"PNG",
-            "choices" : ["PNG","JPG","GIF","PDF (Download Only)"]
+            "choices" : ["PNG","JPG","GIF","PDF (Download Only)"],
             "required":True,
             "label":"Image Format",
             "type":"string",
@@ -472,12 +472,14 @@ will be generated in the same format.
 # then that function will be called to deliver the tool configuration
 # to the NMTK, and the file-based configuration will not be used.
 if __name__ == "__main__":
+    import json
     if not tools:
         tools = ["tool_config"]
     for tool_name in tools:
         print "Configurating tool %s"%(tool_name,)
         tool_data = eval(tool_name)
         js = json.dumps(tool_data,indent=2, separators=(',',':'))
-        f = file("templates/Configurator/%s.json"%(tool_name,),"w")
-        f.write(js)
-        f.close()
+        print js
+#        f = file("templates/Configurator/%s.json"%(tool_name,),"w")
+#        f.write(js)
+#        f.close()
