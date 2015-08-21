@@ -159,7 +159,7 @@ of result fields or what result types they should expect.</li>
         ],
         "docs" : [
             "uri" : "ToolSpec_2015-07-31.docx",
-            "mimetype" : "",
+            "mimetype" : "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
             "name" : "Tool Configuration Specification",
         ],
     },
