@@ -360,7 +360,7 @@ If this is checked but no rasterization input is provided, a default shapefile w
                   "required" : True,
                   "label" : "Image Input",
                   "type" : "boolean",
-                  "name" : "imageinput"
+                  "name" : "imagevector"
               },
               {
                   "description" : """
@@ -422,25 +422,37 @@ The boolean parameters below will control what is returned.
           {
             "description":"""
 Return a raw raster file.  The tool will return either the raster resulting from rasterization,
-or if rasterization was not attempted, then a pre-constructed geographic raster.
+or if rasterization was not attempted, then a pre-constructed geographic raster.  If you choose
+'None', then no raster will be returned, even if rasterization was attempted.
 """,
-            "default":0,
+            "default":"geoTIFF",
             "required":True,
             "label":"Return Raster",
-            "type":"boolean",
-            "name":"return_raster"
+            "type":"string",
+            "choices":["None","Erdas Imagine Images (.img)","GeoTIFF","RData"],
+            "name":"return_raster",
+          },
+          {
+            "description":"""
+If you choose to return a raster, use this setting to change the default base name for the file.
+""",
+            "default":"raster",
+            "required":True,
+            "label":"Raster Base Name",
+            "type":"string",
+            "name":"raster_basename",
           },
           {
             "description":"""
 Mirror (return) the input vector file used for rasterization as a geoJSON file.  If no rasterization input file
-was provided, return a pre-determined sample geographic vector file.  NMTK Rubik's cube: can you get this tool
-to 
+was provided, return a pre-determined sample geographic vector file (the same that will be used if rasterization
+is requested but no input is provided).
 """,
             "default":0,
             "required":True,
             "label":"Mirror Input Vector",
             "type":"boolean",
-            "name":"return_vector"
+            "name":"return_vector",
           },
         ],
       },
@@ -451,7 +463,7 @@ to
         "label":"Image Output",
         "description":"""
 If you requested images, you can set the format that will be returned here from a list of supported types (plus
-one unsupported type that can be downloaded but not viewed).
+one unsupported type, PDF, that can be downloaded but not viewed).
 """,
         "elements":[
           {
@@ -464,7 +476,7 @@ will be generated in the same format.
             "required":True,
             "label":"Image Format",
             "type":"string",
-            "name":"image_format"
+            "name":"imageformat"
           },
         ],
       },
