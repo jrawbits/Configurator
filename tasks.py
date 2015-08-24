@@ -84,49 +84,49 @@ def performModel(input_files,
 
         client.updateStatus(computemsg)
 
-#         ########################################
-#         # Rasterization (desired, input file provided, default to use instead)
-#         raster_factors = ConfigIterator(input_files,'rasterization_params',setup)
-# 
-#         #   Check if rasterization was requested
-#         dorasterize = raster["do"] = raster_factors.data.get('dorasterize',0)
-# 
-#         # We're setting up rasterization manually (rather than via ConfigIterator)
-#         # because we just need the 'value' property name and the file name for R
-#         default_vector_name = os.path.join(settings.STATIC_ROOT, "ALX_roads.json")
-#         if dorasterize: # don't bother setting up unless rasterization requested
-# 
-#             # Get the filename to rasterize, substituting in a default if no file is
-#             # provided.  We won't load the file data since we're just going to hand
-#             # the file path to R for processing.
-#             try:
-#                 raster["vectorname"] = input_files['rasterize'][0] # the file name
-#             except:  # No file provided, so we'll pull out the default
-#                 raster["vectorname"] = default_vector_name
-# 
-#             # Pull the rastervalue from the job configuration.  We don't care if it's
-#             # a literal numeric value or a property name.  The R function to
-#             # rasterize the file will use the value as a constant if provided, or
-#             # will use a string as the name of a feature attribute to provide the
-#             # raster value for that feature.
-#             raster["value"] = 1
-#             for key, value in setup['rasterize'].iteritems():
-#                 if key == 'rastervalue':
-#                     raster["value"] = value.get('value', 1)
-#                 # Note that we don't care if raster["value"] is a string/fieldname or
-#                 # a number because R can handle either one, and we can pass it
-#                 # transparently
-# 
-#             #   Set output format (Rdata, Erdas IMAGINE, geoTIFF)
-#             raster_output = ConfigIterator(input_files,'rasterization_output',setup)
-#             raster["returnraster"] = raster_output.data.get('return_raster',0) # text of the format requested
-#             raster["returnvector"] = raster_output.data.get('return_vector',0)
-#             raster["rastername"] = raster_output.data.get('raster_basename',"raster")
-# 
-#             client.updateStatus('Rasterization configured.')
-#         else:
-#             client.updateStatus('Rasterization was not requested')
-# 
+        ########################################
+        # Rasterization (desired, input file provided, default to use instead)
+        raster_factors = ConfigIterator(input_files,'rasterization_params',setup)
+
+        #   Check if rasterization was requested
+        dorasterize = raster["do"] = raster_factors.data.get('dorasterize',0)
+
+        # We're setting up rasterization manually (rather than via ConfigIterator)
+        # because we just need the 'value' property name and the file name for R
+        default_vector_name = os.path.join(settings.STATIC_ROOT, "ALX_roads.json")
+        if dorasterize: # don't bother setting up unless rasterization requested
+
+            # Get the filename to rasterize, substituting in a default if no file is
+            # provided.  We won't load the file data since we're just going to hand
+            # the file path to R for processing.
+            try:
+                raster["vectorname"] = input_files['rasterize'][0] # the file name
+            except:  # No file provided, so we'll pull out the default
+                raster["vectorname"] = default_vector_name
+
+            # Pull the rastervalue from the job configuration.  We don't care if it's
+            # a literal numeric value or a property name.  The R function to
+            # rasterize the file will use the value as a constant if provided, or
+            # will use a string as the name of a feature attribute to provide the
+            # raster value for that feature.
+            raster["value"] = 1
+            for key, value in setup['rasterize'].iteritems():
+                if key == 'rastervalue':
+                    raster["value"] = value.get('value', 1)
+                # Note that we don't care if raster["value"] is a string/fieldname or
+                # a number because R can handle either one, and we can pass it
+                # transparently
+
+            #   Set output format (Rdata, Erdas IMAGINE, geoTIFF)
+            raster_output = ConfigIterator(input_files,'rasterization_output',setup)
+            raster["returnraster"] = raster_output.data.get('return_raster',0) # text of the format requested
+            raster["returnvector"] = raster_output.data.get('return_vector',0)
+            raster["rastername"] = raster_output.data.get('raster_basename',"raster")
+
+            client.updateStatus('Rasterization configured.')
+        else:
+            client.updateStatus('Rasterization was not requested')
+
 #         ########################################
 #         # Image Generation (desired, output format)
 #         image_selection = ConfigIterator(input_files,'imaging_params',setup)

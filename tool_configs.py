@@ -231,31 +231,31 @@ Data elements that will be transformed using the factors
               },
             ],
         },
-#         {
-#             "type" : "File",            # Elements that can be read in multiple rows from a file
-#             "name" : "rasterize",       # 'name' and 'namespace' are probably redundant
-#             "namespace" : "rasterize",
-#             "description" :
-# """
-# Data file that will be used for rasterization (must be spatial)
-# """,
-#             "primary" : False,            # True if...
-#             "label" : "Data used for rasterization",
-#             # "spatial_types" : ["POLYGON","POINT","LINE"], # require specific spatial types
-#             # "required" : True,           # If true, an actual file must be provided
-#             "elements" : [
-#               {
-#                   "description" : """
-# The value to be assigned to raster cells coinciding with the feature.  May be a constant or a file property.
-# """,
-#                   "default" : 10,
-#                   "required" : True,
-#                   "label" : "Raster Value",
-#                   "type" : "number",
-#                   "name" : "rastervalue"
-#               },
-#             ],
-#         },
+        {
+            "type" : "File",            # Elements that can be read in multiple rows from a file
+            "name" : "rasterize",       # 'name' and 'namespace' are probably redundant
+            "namespace" : "rasterize",
+            "description" :
+"""
+Data file that will be used for rasterization (must be spatial)
+""",
+            "primary" : False,            # True if...
+            "label" : "Data used for rasterization",
+            # "spatial_types" : ["POLYGON","POINT","LINE"], # require specific spatial types
+            # "required" : True,           # If true, an actual file must be provided
+            "elements" : [
+              {
+                  "description" : """
+The value to be assigned to raster cells coinciding with the feature.  May be a constant or a file property.
+""",
+                  "default" : 10,
+                  "required" : True,
+                  "label" : "Raster Value",
+                  "type" : "number",
+                  "name" : "rastervalue"
+              },
+            ],
+        },
         {
             "type" : "ConfigurationPage",  # Elements that are provided as a single instance (global)
             "name" : "computation_params",
@@ -286,62 +286,62 @@ Parameters that control what will be done with the computation data.
               },
             ],
         },
-#         {
-#             "type" : "ConfigurationPage",  # Elements that are provided as a single instance (global)
-#             "name" : "rasterization_params",
-#             "namespace" : "rasterization_params",
-#             "description" :
-# """
-# Parameters that control how rasterization will be performed.
-# """,
-#             "label" : "Rasterization Parameters",
-#             "expanded" : True,
-#             "elements" : [
-#               {
-#                   "description" : "If true, the rasterization will be attempted.",
-#                   "default" : 0,
-#                   "required" : True,
-#                   "label" : "Rasterize",
-#                   "type" : "boolean",
-#                   "name" : "dorasterize"
-#               },
-#               {
-#                   "description" : "Number of X (East-West) cells to construct",
-#                   "display_if_true" : "dorasterize", # only show this field if rasterizing is non-zero
-#                   "default" : 300,
-#                   "required" : True,
-#                   "label" : "X Cells",
-#                   "type" : "numeric",
-#                   "name" : "raster_x"
-#               },
-#               {
-#                   "description" : "Number of Y (North-South) cells to construct",
-#                   "display_if_true" : "dorasterize", # only show this field if rasterizing is non-zero
-#                   "default" : 300,
-#                   "required" : True,
-#                   "label" : "Y Cells",
-#                   "type" : "numeric",
-#                   "name" : "raster_y"
-#               },
-#               {
-#                   "description" : "If rasterizing a polygon file, show fraction of cell covered rather than all or nothing.",
-#                   "display_if_true" : "dorasterize", # only show this field if rasterizing is non-zero
-#                   "default" : 0,
-#                   "required" : True,
-#                   "label" : "Proportional Area",
-#                   "type" : "numeric",
-#                   "name" : "proportional"
-#               },
-#               {
-#                   "description" : "Smooth the rasterized cells into adjacent cells using this parameter",
-#                   "display_if_true" : "dorasterize", # only show this field if rasterizing is non-zero
-#                   "required" : False,
-#                   "label" : "Smoothing",
-#                   "type" : "numeric",
-#                   "name" : "smoothing"
-#               },
-#             ],
-#         },
+        {
+            "type" : "ConfigurationPage",  # Elements that are provided as a single instance (global)
+            "name" : "rasterization_params",
+            "namespace" : "rasterization_params",
+            "description" :
+"""
+Parameters that control how rasterization will be performed.
+""",
+            "label" : "Rasterization Parameters",
+            "expanded" : True,
+            "elements" : [
+              {
+                  "description" : "If true, the rasterization will be attempted.",
+                  "default" : 0,
+                  "required" : True,
+                  "label" : "Rasterize",
+                  "type" : "boolean",
+                  "name" : "dorasterize"
+              },
+              {
+                  "description" : "Number of X (East-West) cells to construct",
+                  "display_if_true" : "dorasterize", # only show this field if rasterizing is non-zero
+                  "default" : 300,
+                  "required" : True,
+                  "label" : "X Cells",
+                  "type" : "numeric",
+                  "name" : "raster_x"
+              },
+              {
+                  "description" : "Number of Y (North-South) cells to construct",
+                  "display_if_true" : "dorasterize", # only show this field if rasterizing is non-zero
+                  "default" : 300,
+                  "required" : True,
+                  "label" : "Y Cells",
+                  "type" : "numeric",
+                  "name" : "raster_y"
+              },
+              {
+                  "description" : "If rasterizing a polygon file, show fraction of cell covered rather than all or nothing.",
+                  "display_if_true" : "dorasterize", # only show this field if rasterizing is non-zero
+                  "default" : 0,
+                  "required" : True,
+                  "label" : "Proportional Area",
+                  "type" : "numeric",
+                  "name" : "proportional"
+              },
+              {
+                  "description" : "Smooth the rasterized cells into adjacent cells using this parameter",
+                  "display_if_true" : "dorasterize", # only show this field if rasterizing is non-zero
+                  "required" : False,
+                  "label" : "Smoothing",
+                  "type" : "numeric",
+                  "name" : "smoothing"
+              },
+            ],
+        },
 #         {
 #             "type" : "ConfigurationPage",  # Elements that are provided as a single instance (global)
 #             "name" : "imaging_params",
