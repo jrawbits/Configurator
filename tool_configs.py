@@ -158,9 +158,11 @@ of result fields or what result types they should expect.</li>
               }
         ],
         "docs" : [
-            "url" : "ToolSpec_2015-07-31.docx",
-            "mimetype" : "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-            "name" : "Tool Configuration Specification",
+            {
+                "url" : "ToolSpec_2015-07-31.docx",
+                "mimetype" : "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                "name" : "Tool Configuration Specification",
+            }
         ],
     },
 # The sample section should be developed after the input and output
@@ -221,7 +223,7 @@ Data elements that will be transformed using the factors
                   "description" : "Sorry, you only get three data fields or we'll be here all day!",
                   "default" : "",
                   "display_if_filled" : "raiseme3",
-                  "required" : True,
+                  "required" : False,
                   "readonly" : True,
                   "label" : "Out Of Power",
                   "type" : "string",
@@ -229,31 +231,31 @@ Data elements that will be transformed using the factors
               },
             ],
         },
-        {
-            "type" : "File",            # Elements that can be read in multiple rows from a file
-            "name" : "rasterize",       # 'name' and 'namespace' are probably redundant
-            "namespace" : "rasterize",
-            "description" :
-"""
-Data file that will be used for rasterization (must be spatial)
-""",
-            "primary" : False,            # True if...
-            "label" : "Data used for rasterization",
-            "spatial_types" : ["POLYGON","POINT","LINE"], # require specific spatial types
-            # "required" : True,           # If true, an actual file must be provided
-            "elements" : [
-              {
-                  "description" : """
-The value to be assigned to raster cells coinciding with the feature.  May be a constant or a file property.
-""",
-                  "default" : 10,
-                  "required" : True,
-                  "label" : "Raster Value",
-                  "type" : "number",
-                  "name" : "rastervalue"
-              },
-            ],
-        },
+#         {
+#             "type" : "File",            # Elements that can be read in multiple rows from a file
+#             "name" : "rasterize",       # 'name' and 'namespace' are probably redundant
+#             "namespace" : "rasterize",
+#             "description" :
+# """
+# Data file that will be used for rasterization (must be spatial)
+# """,
+#             "primary" : False,            # True if...
+#             "label" : "Data used for rasterization",
+#             # "spatial_types" : ["POLYGON","POINT","LINE"], # require specific spatial types
+#             # "required" : True,           # If true, an actual file must be provided
+#             "elements" : [
+#               {
+#                   "description" : """
+# The value to be assigned to raster cells coinciding with the feature.  May be a constant or a file property.
+# """,
+#                   "default" : 10,
+#                   "required" : True,
+#                   "label" : "Raster Value",
+#                   "type" : "number",
+#                   "name" : "rastervalue"
+#               },
+#             ],
+#         },
         {
             "type" : "ConfigurationPage",  # Elements that are provided as a single instance (global)
             "name" : "computation_params",
@@ -284,98 +286,98 @@ Parameters that control what will be done with the computation data.
               },
             ],
         },
-        {
-            "type" : "ConfigurationPage",  # Elements that are provided as a single instance (global)
-            "name" : "rasterization_params",
-            "namespace" : "rasterization_params",
-            "description" :
-"""
-Parameters that control how rasterization will be performed.
-""",
-            "label" : "Rasterization Parameters",
-            "expanded" : True,
-            "elements" : [
-              {
-                  "description" : "If true, the rasterization will be attempted.",
-                  "default" : 0,
-                  "required" : True,
-                  "label" : "Rasterize",
-                  "type" : "boolean",
-                  "name" : "dorasterize"
-              },
-              {
-                  "description" : "Number of X (East-West) cells to construct",
-                  "display_if_true" : "dorasterize", # only show this field if rasterizing is non-zero
-                  "default" : 300,
-                  "required" : True,
-                  "label" : "X Cells",
-                  "type" : "numeric",
-                  "name" : "raster_x"
-              },
-              {
-                  "description" : "Number of Y (North-South) cells to construct",
-                  "display_if_true" : "dorasterize", # only show this field if rasterizing is non-zero
-                  "default" : 300,
-                  "required" : True,
-                  "label" : "Y Cells",
-                  "type" : "numeric",
-                  "name" : "raster_y"
-              },
-              {
-                  "description" : "If rasterizing a polygon file, show fraction of cell covered rather than all or nothing.",
-                  "display_if_true" : "dorasterize", # only show this field if rasterizing is non-zero
-                  "default" : 0,
-                  "required" : True,
-                  "label" : "Proportional Area",
-                  "type" : "numeric",
-                  "name" : "proportional"
-              },
-              {
-                  "description" : "Smooth the rasterized cells into adjacent cells using this parameter",
-                  "display_if_true" : "dorasterize", # only show this field if rasterizing is non-zero
-                  "required" : False,
-                  "label" : "Smoothing",
-                  "type" : "numeric",
-                  "name" : "smoothing"
-              },
-            ],
-        },
-        {
-            "type" : "ConfigurationPage",  # Elements that are provided as a single instance (global)
-            "name" : "imaging_params",
-            "namespace" : "imaging_params",
-            "description" :
-"""
-Parameters that control whether images of the rasters will be generated.
-""",
-            "label" : "Imaging Parameters",
-            "expanded" : True,
-            "elements" : [
-              {
-                  "description" : """
-If true, make an image of the input file that will be rasterized.
-If this is checked but no rasterization input is provided, a default shapefile will be imaged.
-""",
-                  "default" : 0,
-                  "required" : True,
-                  "label" : "Image Input",
-                  "type" : "boolean",
-                  "name" : "imagevector"
-              },
-              {
-                  "description" : """
-If true, make an image of the rasterized file.
-If this is checked but no rasterization was attempted (due to missing input or not requested),
-a default raster will be imaged.
-""",
-                  "default" : 0,
-                  "required" : True,
-                  "label" : "Image Raster",
-                  "type" : "boolean",
-                  "name" : "imageraster"
-              },
-            ],
-        }
+#         {
+#             "type" : "ConfigurationPage",  # Elements that are provided as a single instance (global)
+#             "name" : "rasterization_params",
+#             "namespace" : "rasterization_params",
+#             "description" :
+# """
+# Parameters that control how rasterization will be performed.
+# """,
+#             "label" : "Rasterization Parameters",
+#             "expanded" : True,
+#             "elements" : [
+#               {
+#                   "description" : "If true, the rasterization will be attempted.",
+#                   "default" : 0,
+#                   "required" : True,
+#                   "label" : "Rasterize",
+#                   "type" : "boolean",
+#                   "name" : "dorasterize"
+#               },
+#               {
+#                   "description" : "Number of X (East-West) cells to construct",
+#                   "display_if_true" : "dorasterize", # only show this field if rasterizing is non-zero
+#                   "default" : 300,
+#                   "required" : True,
+#                   "label" : "X Cells",
+#                   "type" : "numeric",
+#                   "name" : "raster_x"
+#               },
+#               {
+#                   "description" : "Number of Y (North-South) cells to construct",
+#                   "display_if_true" : "dorasterize", # only show this field if rasterizing is non-zero
+#                   "default" : 300,
+#                   "required" : True,
+#                   "label" : "Y Cells",
+#                   "type" : "numeric",
+#                   "name" : "raster_y"
+#               },
+#               {
+#                   "description" : "If rasterizing a polygon file, show fraction of cell covered rather than all or nothing.",
+#                   "display_if_true" : "dorasterize", # only show this field if rasterizing is non-zero
+#                   "default" : 0,
+#                   "required" : True,
+#                   "label" : "Proportional Area",
+#                   "type" : "numeric",
+#                   "name" : "proportional"
+#               },
+#               {
+#                   "description" : "Smooth the rasterized cells into adjacent cells using this parameter",
+#                   "display_if_true" : "dorasterize", # only show this field if rasterizing is non-zero
+#                   "required" : False,
+#                   "label" : "Smoothing",
+#                   "type" : "numeric",
+#                   "name" : "smoothing"
+#               },
+#             ],
+#         },
+#         {
+#             "type" : "ConfigurationPage",  # Elements that are provided as a single instance (global)
+#             "name" : "imaging_params",
+#             "namespace" : "imaging_params",
+#             "description" :
+# """
+# Parameters that control whether images of the rasters will be generated.
+# """,
+#             "label" : "Imaging Parameters",
+#             "expanded" : True,
+#             "elements" : [
+#               {
+#                   "description" : """
+# If true, make an image of the input file that will be rasterized.
+# If this is checked but no rasterization input is provided, a default shapefile will be imaged.
+# """,
+#                   "default" : 0,
+#                   "required" : True,
+#                   "label" : "Image Input",
+#                   "type" : "boolean",
+#                   "name" : "imagevector"
+#               },
+#               {
+#                   "description" : """
+# If true, make an image of the rasterized file.
+# If this is checked but no rasterization was attempted (due to missing input or not requested),
+# a default raster will be imaged.
+# """,
+#                   "default" : 0,
+#                   "required" : True,
+#                   "label" : "Image Raster",
+#                   "type" : "boolean",
+#                   "name" : "imageraster"
+#               },
+#             ],
+#         }
     ], 
     "output" : [
       {
@@ -429,7 +431,7 @@ or if rasterization was not attempted, then a pre-constructed geographic raster.
             "required":True,
             "label":"Return Raster",
             "type":"string",
-            "choices":["None","Erdas Imagine Images (.img)","GeoTIFF","RData"],
+            "choices":["geoTIFF","Erdas Imagine Images (.img)","RData","None"],
             "name":"return_raster",
           },
           {

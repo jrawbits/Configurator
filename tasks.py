@@ -60,16 +60,19 @@ def performModel(input_files,
             compute_Python = compute["with_Python"] = computetype in ['Python','Both']
 
             computemsg = "Computation will occur using"
-            computemsg += " R" if compute_R
-            computemsg += " and" if compute_R and compute_Python
-            computemsg += " Python" if compute_Python
+            if compute_R:
+                computemsg += " R"
+                if compute_Python:
+                    computemsg += " and"
+            if compute_Python:
+                computemsg += " Python"
 
-            #   Determine parameter; default is to square it same as tool_config
+            #   Determine parameter; default is to square it same as /tool_config
             compute["raisetopower"] = compute_factors.data.get('raisetopower',2)
 
             #   Determine input (file/constant data) / we'll iterate later
             compute_file = ConfigIterator(input_files,'computation',setup)
-            if (compute_R or compute_Python) and not compute_file.iterable:
+            if (compute_R or compute_Python) and not ( compute_file.iterable or compute_file.data ):
                 raise Exception("Cannot perform computations without input data")
 
             #   Determine what to return (result file)
@@ -81,64 +84,64 @@ def performModel(input_files,
 
         client.updateStatus(computemsg)
 
-        ########################################
-        # Rasterization (desired, input file provided, default to use instead)
-        raster_factors = ConfigIterator(input_files,'rasterization_params',setup)
+#         ########################################
+#         # Rasterization (desired, input file provided, default to use instead)
+#         raster_factors = ConfigIterator(input_files,'rasterization_params',setup)
+# 
+#         #   Check if rasterization was requested
+#         dorasterize = raster["do"] = raster_factors.data.get('dorasterize',0)
+# 
+#         # We're setting up rasterization manually (rather than via ConfigIterator)
+#         # because we just need the 'value' property name and the file name for R
+#         default_vector_name = os.path.join(settings.STATIC_ROOT, "ALX_roads.json")
+#         if dorasterize: # don't bother setting up unless rasterization requested
+# 
+#             # Get the filename to rasterize, substituting in a default if no file is
+#             # provided.  We won't load the file data since we're just going to hand
+#             # the file path to R for processing.
+#             try:
+#                 raster["vectorname"] = input_files['rasterize'][0] # the file name
+#             except:  # No file provided, so we'll pull out the default
+#                 raster["vectorname"] = default_vector_name
+# 
+#             # Pull the rastervalue from the job configuration.  We don't care if it's
+#             # a literal numeric value or a property name.  The R function to
+#             # rasterize the file will use the value as a constant if provided, or
+#             # will use a string as the name of a feature attribute to provide the
+#             # raster value for that feature.
+#             raster["value"] = 1
+#             for key, value in setup['rasterize'].iteritems():
+#                 if key == 'rastervalue':
+#                     raster["value"] = value.get('value', 1)
+#                 # Note that we don't care if raster["value"] is a string/fieldname or
+#                 # a number because R can handle either one, and we can pass it
+#                 # transparently
+# 
+#             #   Set output format (Rdata, Erdas IMAGINE, geoTIFF)
+#             raster_output = ConfigIterator(input_files,'rasterization_output',setup)
+#             raster["returnraster"] = raster_output.data.get('return_raster',0) # text of the format requested
+#             raster["returnvector"] = raster_output.data.get('return_vector',0)
+#             raster["rastername"] = raster_output.data.get('raster_basename',"raster")
+# 
+#             client.updateStatus('Rasterization configured.')
+#         else:
+#             client.updateStatus('Rasterization was not requested')
+# 
+#         ########################################
+#         # Image Generation (desired, output format)
+#         image_selection = ConfigIterator(input_files,'imaging_params',setup)
+#         image["vector"] = image_selection.data.get('imagevector',0)
+#         image["raster"] = image_selection.data.get('imageraster',0)
+# 
+#         image_output = ConfigIterator(input_files,'imaging_output',setup)
+#         image["format"] = image_output.data.get('imageformat','PNG')
+#         if image_vector or image_raster:
+#             client.updateStatus("Imaging successfully configured.")
+#         else:
+#             client.updateStatus("Imaging was not requested.")
 
-        #   Check if rasterization was requested
-        dorasterize = raster["do"] = raster_factors.data.get('dorasterize',0)
-
-        # We're setting up rasterization manually (rather than via ConfigIterator)
-        # because we just need the 'value' property name and the file name for R
-        default_vector_name = os.path.join(settings.STATIC_ROOT, "ALX_roads.json")
-        if dorasterize: # don't bother setting up unless rasterization requested
-
-            # Get the filename to rasterize, substituting in a default if no file is
-            # provided.  We won't load the file data since we're just going to hand
-            # the file path to R for processing.
-            try:
-                raster["vectorname"] = input_files['rasterize'][0] # the file name
-            except:  # No file provided, so we'll pull out the default
-                raster["vectorname"] = default_vector_name
-
-            # Pull the rastervalue from the job configuration.  We don't care if it's
-            # a literal numeric value or a property name.  The R function to
-            # rasterize the file will use the value as a constant if provided, or
-            # will use a string as the name of a feature attribute to provide the
-            # raster value for that feature.
-            raster["value"] = 1
-            for key, value in setup['rasterize'].iteritems():
-                if key == 'rastervalue':
-                    raster["value"] = value.get('value', 1)
-                # Note that we don't care if raster["value"] is a string/fieldname or
-                # a number because R can handle either one, and we can pass it
-                # transparently
-
-            #   Set output format (Rdata, Erdas IMAGINE, geoTIFF)
-            raster_output = ConfigIterator(input_files,'rasterization_output',setup)
-            raster["returnraster"] = raster_output.data.get('return_raster',0) # text of the format requested
-            raster["returnvector"] = raster_output.data.get('return_vector',0)
-            raster["rastername"] = raster_output.data.get('raster_basename',"raster")
-
-            client.updateStatus('Rasterization configured.')
-        else:
-            client.updateStatus('Rasterization was not requested')
-
-        ########################################
-        # Image Generation (desired, output format)
-        image_selection = ConfigIterator(input_files,'imaging_params',setup)
-        image["vector"] = image_selection.data.get('imagevector',0)
-        image["raster"] = image_selection.data.get('imageraster',0)
-
-        image_output = ConfigIterator(input_files,'imaging_output',setup)
-        image["format"] = image_output.data.get('imageformat','PNG')
-        if image_vector or image_raster:
-            client.updateStatus("Imaging successfully configured.")
-        else:
-            client.updateStatus("Imaging was not requested."
-
-    except Exception, e:
-        logger.exception('Failed to parse config file or data file.')
+    except Exception as e:
+        logger.exception('Failed to parse configuration file or data file.')
         failures.append('Invalid job configuration')
         logger.exception(str(e))
         failures.append(str(e))
@@ -147,13 +150,20 @@ def performModel(input_files,
         for f in failures:
             logger.debug("Failure: %s",f)
         client.updateResults(payload={'errors': failures },
-                             failure=True)
+                             failure=True,
+                             files={}
+                            )
     else:    
         client.updateStatus('Parameter & data file validation complete.')
         parameter_summary = [("Description","Value")]
+        logger.debug("Parameter dictionary")
+        logger.debug(str(parameters))
         for section in ["compute","raster","image"]:
-            for k,v in parameters[section]:
-                parameter_summary.append( ("Parameters-%s-%s"%(section,k,),str(v)) )
+            if section in parameters:
+                logger.debug("Section ",section,str(parameters[section]))
+                parameter_summary.append( ("Section",section) )
+                for k,v in parameters[section].iteritems():
+                    parameter_summary.append( ("Parameter-%s-%s"%(section,k,),str(v)) )
         summ_text = "\n".join( [ ",".join((str(a),str(b))) for (a,b) in parameter_summary ] )
 
         client.updateResults(result_field=None,
