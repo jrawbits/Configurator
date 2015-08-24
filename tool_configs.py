@@ -249,7 +249,6 @@ Data file that will be used for rasterization (must be spatial)
 The value to be assigned to raster cells coinciding with the feature.  May be a constant or a file property.
 """,
                   "default" : 10,
-                  "required" : True,
                   "label" : "Raster Value",
                   "type" : "number",
                   "name" : "rastervalue"
@@ -307,7 +306,6 @@ Parameters that control how rasterization will be performed.
               },
               {
                   "description" : "Number of X (East-West) cells to construct",
-                  "display_if_true" : "dorasterize", # only show this field if rasterizing is non-zero
                   "default" : 300,
                   "required" : True,
                   "label" : "X Cells",
@@ -316,7 +314,6 @@ Parameters that control how rasterization will be performed.
               },
               {
                   "description" : "Number of Y (North-South) cells to construct",
-                  "display_if_true" : "dorasterize", # only show this field if rasterizing is non-zero
                   "default" : 300,
                   "required" : True,
                   "label" : "Y Cells",
@@ -325,7 +322,6 @@ Parameters that control how rasterization will be performed.
               },
               {
                   "description" : "If rasterizing a polygon file, show fraction of cell covered rather than all or nothing.",
-                  "display_if_true" : "dorasterize", # only show this field if rasterizing is non-zero
                   "default" : 0,
                   "required" : True,
                   "label" : "Proportional Area",
@@ -334,7 +330,7 @@ Parameters that control how rasterization will be performed.
               },
               {
                   "description" : "Smooth the rasterized cells into adjacent cells using this parameter",
-                  "display_if_true" : "dorasterize", # only show this field if rasterizing is non-zero
+                  "default" : 0,
                   "required" : False,
                   "label" : "Smoothing",
                   "type" : "numeric",
