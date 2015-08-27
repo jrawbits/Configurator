@@ -10,6 +10,9 @@ import decimal
 import os
 import pyRserve
 
+import csv
+import cStringIO as StringIO
+
 def getPythonValue(value,power):
     pass
 def getRValue(value,power):
@@ -150,21 +153,31 @@ def performModel(input_files,
                                 )
         else:    
             client.updateStatus('Parameter & data file validation complete.')
-            parameter_summary = [("Description","Value")]
+
             logger.debug("Parameter dictionary")
             logger.debug(str(parameters))
+
+            # Following code just dumps out the parameters
+            output = StringIO.StringIO()
+            dw = csv.DictWriter(output, fieldnames=("Description","Value"), extrasaction='ignore')
+            dw.writeheader()
             for section in ["compute","raster","image"]:
                 if section in parameters:
-                    parameter_summary.append( ("Section",section) )
-                    for k,v in parameters[section].iteritems():
-                        parameter_summary.append( ("Parameter-%s-%s"%(section,k,),str(v)) )
-            summ_text = "\n".join( [ ",".join((str(a),str(b))) for (a,b) in parameter_summary ] )
+                    dw.writerow({"Description":"Section", "Value" : section})
+                    for description,value in parameters[section].iteritems():
+                        dw.writerow(
+                            {
+                                "Description"  : "Parameter-%s-%s"%(section,description,),
+                                "Value"        : str(value)
+                            }
+                        )
+            del dw
 
             client.updateResults(result_field=None,
                                  units=None,
                                  result_file='summary',
                                  files={'summary': ('summary.csv',
-                                                summ_text, 
+                                                output.getvalue(), 
                                                 'text/csv')
                                         })
 
