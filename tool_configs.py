@@ -12,7 +12,7 @@ folder as required by the NMTK architecture.  If you pre-build the
 files and put them in the right template directory, you can remove
 the function and just load the config as a static JSON file.  The file
 will be added to the NMTK when the system is installed, or when you
-run the Django command python manage.py collect_static.
+run the Django command python manage.py collectstatic.
 
 This file need not contain anything (then the NMTK will just look for
 a pre-built tool_config.json in the app's templates folder).
@@ -72,7 +72,7 @@ tool_config = {
 # a website or some other source.
         "text" : """
 <p>The "Configurator" is the place to begin if you're trying to figure out how
-to build an interface description for a Non-Motorized Toolkit (NMTK) tool(what
+to build an interface description for a Non-Motorized Toolkit (NMTK) tool (what
 we call a "tool configuration" or just a "tool config").</p>
 
 <p>This tool demonstrates the essential properties of an NMTK tool configuration
@@ -149,19 +149,19 @@ of result fields or what result types they should expect.</li>
     "documentation" : {
         "links" : [
               {
-                "url":"http://github.com/jrawbits/Configurator",
-                "title":"Visit the Configurator on Github"
-              },
-              {
                 "url":"http://nmtk.jeremyraw.com/Configurator/config",
                 "title":"See the Configurator's raw configuration file"
-              }
+              },
+              {
+                "url":"http://github.com/jrawbits/Configurator",
+                "title":"Visit the Configurator source code on Github"
+              },
         ],
         "docs" : [
             {
                 "url" : "ToolSpec_2015-07-31.docx",
                 "mimetype" : "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                "name" : "Tool Configuration Specification",
+                "name" : "Tool Configuration Specification (.docx, 2015-07-31)",
             }
         ],
     },
@@ -242,7 +242,7 @@ Data file that will be used for rasterization (must be spatial)
             "primary" : False,            # True if...
             "label" : "Data used for rasterization",
             # "spatial_types" : ["POLYGON","POINT","LINE"], # require specific spatial types
-            # "required" : True,           # If true, an actual file must be provided
+            "required" : False,           # If true, an actual file must be provided
             "elements" : [
               {
                   "description" : """
@@ -338,42 +338,42 @@ Parameters that control how rasterization will be performed.
               },
             ],
         },
-#         {
-#             "type" : "ConfigurationPage",  # Elements that are provided as a single instance (global)
-#             "name" : "imaging_params",
-#             "namespace" : "imaging_params",
-#             "description" :
-# """
-# Parameters that control whether images of the rasters will be generated.
-# """,
-#             "label" : "Imaging Parameters",
-#             "expanded" : True,
-#             "elements" : [
-#               {
-#                   "description" : """
-# If true, make an image of the input file that will be rasterized.
-# If this is checked but no rasterization input is provided, a default shapefile will be imaged.
-# """,
-#                   "default" : 0,
-#                   "required" : True,
-#                   "label" : "Image Input",
-#                   "type" : "boolean",
-#                   "name" : "imagevector"
-#               },
-#               {
-#                   "description" : """
-# If true, make an image of the rasterized file.
-# If this is checked but no rasterization was attempted (due to missing input or not requested),
-# a default raster will be imaged.
-# """,
-#                   "default" : 0,
-#                   "required" : True,
-#                   "label" : "Image Raster",
-#                   "type" : "boolean",
-#                   "name" : "imageraster"
-#               },
-#             ],
-#         }
+        {
+            "type" : "ConfigurationPage",  # Elements that are provided as a single instance (global)
+            "name" : "imaging_params",
+            "namespace" : "imaging_params",
+            "description" : """
+                    Parameters that control whether images of the rasters will be generated.
+                    """,
+            "label" : "Imaging Parameters",
+            "expanded" : True,
+            "elements" : [
+              {
+                  "description" : """
+                    If true, make an image of the input file that will be rasterized.
+                    If this is checked but no rasterization input is provided,
+                    a default shapefile will be imaged.
+                    """,
+                  "default" : 0,
+                  "required" : True,
+                  "label" : "Image Input",
+                  "type" : "boolean",
+                  "name" : "imagevector"
+              },
+              {
+                  "description" : """
+                    If true, make an image of the rasterized file.
+                    If this is checked but no rasterization was attempted (due to missing input
+                    or not requested), a default raster will be imaged.
+                    """,
+                  "default" : 0,
+                  "required" : True,
+                  "label" : "Image Raster",
+                  "type" : "boolean",
+                  "name" : "imageraster"
+              },
+            ],
+        }
     ], 
     "output" : [
       {
