@@ -11,11 +11,21 @@ from django.core.serializers.json import DjangoJSONEncoder
 import logging
 logger=logging.getLogger(__name__)
 
+def uniqueField(record,basefld):
+    "Ensure that 'field' is unique in the record by appending digits"
+    field = basefld
+    if field in record:
+        basenum = 0
+        while field in record:
+            basenum += 1
+            field = "%s_%d"%(basefld,basenum)
+    return field
+
 class ElementSet(dict):
     '''
     Wrap a few extra functions around a bare dictionary, including a constructor
     that will load a copy of the "config" dictionary keys (and REFERENCES to the
-    correspondkdkd`ing values).
+    corresponding values).
     '''
     def __init__(self,config):
         super(ElementSet, self).__init__() # Create a bare dictionary
@@ -24,9 +34,9 @@ class ElementSet(dict):
 
     def addResult(self, field, value):
         '''
-        Warning: if 'field' exists in the original config, it will be overwritten
+        Add result to existing data, but rename field if it already exists
         '''
-        self[field] = value
+        self[uniqueField(self,field)] = value
 
     @property
     def extension(self):
@@ -72,7 +82,10 @@ class FeatureSet(object):
         if self.iterable_fields and self.file_data:
             self.data_parsed = json.loads(open(self.file_data).read())
         elif self.constant_fields: # but no iterable fields
-            self.data_parsed = [ { "features" : {"properties" : self.constant_fields} } ]
+            # Reproduce a minimal "geo" JSON file with one feature
+            # whose properties are the costant fields
+            
+            self.data_parsed = { "features" : [ { "properties" : self.constant_fields } ] }
         else:
             self.data_parsed = None
 
@@ -102,11 +115,12 @@ class FeatureSet(object):
                 else:
                     data[k] = None
         else:
-            data = this_row.copy()  # return deep copy of constants
+            data = self.this_row['properties'].copy()  # return a copy of the constants
         return data  # A dictionary
 
     def addResult(self, field, value):
-        self.this_row['properties'][field] = value # will overwrite an existing field
+        row = self.this_row['properties']
+        row[uniqueField(row,field)] = value # will not overwrite an existing field
 
     @property
     def extension(self):
@@ -189,11 +203,11 @@ class ConfigManager(object):
 
     def getFeatures(self,namespace):
         '''
-        This will reach into the actual file data (if any) to return a FeatureSet (iterable rows, each an ElementSet).
+        This will reach into the actual file data (if any) to return a FeatureSet (iterable rows, each a dictionary).
         For Files, the FeatureSet will consist of iterable rows filling in the property-type element values,
            including any constant values assigned.  At least one row will be iterated (even if the "File" is all constants)
         For ConfigurationPages, return a FeatureSet whose one iterable element is a geoJSON like version
-           of the defined constants (i.e. wrapped in {"features":{"properties": { key/value-pairs }}})
+           of the defined constants (i.e. the source data wrapped in {"features":{"properties": { key/value-pairs }}})
         '''
         return FeatureSet(self.setup()[namespace],self.datafile(namespace))
 

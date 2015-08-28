@@ -320,22 +320,6 @@ Parameters that control how rasterization will be performed.
                   "type" : "numeric",
                   "name" : "raster_y"
               },
-              {
-                  "description" : "If true and rasterizing a polygon file, show fraction of cell covered rather than all or nothing.",
-                  "default" : 0,
-                  "required" : True,
-                  "label" : "Proportional Area",
-                  "type" : "boolean",
-                  "name" : "proportional"
-              },
-              {
-                  "description" : "Smooth the rasterized cells into adjacent cells using this parameter",
-                  "default" : 0,
-                  "required" : False,
-                  "label" : "Smoothing",
-                  "type" : "numeric",
-                  "name" : "smoothing"
-              },
             ],
         },
         {

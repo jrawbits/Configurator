@@ -1,4 +1,7 @@
 #!/usr/bin/env python
 import pyRserve
-conn = pyRserve.connect()
-conn.shutdown()
+try:
+    conn = pyRserve.connect()
+    conn.shutdown()
+except:
+    pass  # Failure will mean Rserve is not running

@@ -33,17 +33,20 @@ def performModel(input_files,
     logger.debug("input_files: %s"%(input_files,))
     logger.debug("tool_config\n%s\n"%(tool_config,))
 
-    # Use exception handling to generate "error" result -- everything that
-    # doesn't generate good results should throw an exception
-    # Use this extra syntax to ensure temporary files are promptly cleaned up
-    # after tool execution.  With luck, the tool server will also do periodic
-    # garbage collection on tools that don't pick up after themselves.
+    # Use exception handling to generate "error" resulta -- everything that
+    # doesn't generate good results should throw an exception Use the extra
+    # 'with' syntax to ensure temporary files are promptly cleaned up after tool
+    # execution.  With luck, the tool server will also do periodic garbage
+    # collection on tools that don't pick up after themselves.
+
     with Config.Job(input_files,tool_config) as job:
         
         try:
-            # Initialize the job setup (cant do in __init__ or we need to try too hard)
+            # Initialize the job setup (cant do in __init__ as we would need to
+            # try too hard)
             job.setup()
-            # Set up a master directory of error conditions and parameters
+
+            # Set up a master directory of parameters
             parameters = {}
             compute = parameters["compute"] = {}
             raster = parameters["raster"] = {}
@@ -74,7 +77,7 @@ def performModel(input_files,
                     computemsg = "Computation will not occur"
 
                 #   Determine parameter; default is to square it same as /tool_config
-                compute["raisetopower"] = compute_factors.get('raisetopower',2)
+                compute["power"] = compute_factors.get('raisetopower',2)
 
                 #   Determine input (file/constant data) / we'll iterate later
                 compute_file = job.getFeatures('computation')
@@ -148,12 +151,14 @@ def performModel(input_files,
 
             client.updateStatus('Parameter & data file validation complete.')
 
-            logger.debug("Parameter dictionary")
-            logger.debug(str(parameters))
+            ###################################
+            # Now perform the requested actions
 
-            # Following code just dumps out the parameters
-            output = StringIO.StringIO()
-            dw = csv.DictWriter(output, fieldnames=("Description","Value"), extrasaction='ignore')
+            ###################################
+            # Configuration Summary
+            # Assemble an output file of what was configured (essentially for debugging)
+            config_summary = StringIO.StringIO()
+            dw = csv.DictWriter(config_summary, fieldnames=("Description","Value"), extrasaction='ignore')
             dw.writeheader()
             for section in ["compute","raster","image"]:
                 if section in parameters:
@@ -167,100 +172,100 @@ def performModel(input_files,
                         )
             del dw
 
-            client.updateResults(result_field=None,
-                                 units=None,
-                                 result_file='summary',
-                                 files={'summary': ('summary.csv',
-                                                output.getvalue(), 
-                                                'text/csv')
-                                        })
+            ###################################
+            # Computation
 
-    #         try:
-    #             client.updateStatus('Starting R Server')
-    #             R = pyRserve.connect()
-    #             factor_iterator=ConfigIterator(input_files, 'factors', setup)
-    #             if factor_iterator.iterable:
-    #                 raise Exception('Factors cannot be iterable')
-    #             else:
-                     # Extract the parameters
-    #                 parameters=factor_iterator.data
-    #                 power = parameters.get('power')
-    #                 logger.debug("'power' is %s",power)
-    # 
-    #             # Check that the required fields are defined for the
-    #             # input data (based on tool_config)
-    # 
-    #             numrecs = 0
-    #             numcomp = 0
-    # 
-    #             pyResultField = setup['perfeature']['python_result']['value']
-    #             RResultField = setup['perfeature']['r_result']['value']
-    # 
-    #             pyPower = decimal.Decimal(str(power))
-    #             R.r.rpower = power # Warning: everyting arrives in the tool as a string
-    # 
-    #             client.updateStatus('Setup complete, starting calculations')
-    # 
-    #             for row in file_iterator: # Loop over the rows in the input file
-    #                 numrecs += 1
-    #                 fldnum = 0
-    #                 for field, value in row.iteritems():
-    #                     logger.debug("Adding Python field %s"%(pyResultField,))
-    #                     try:
-    #                         pyValue = decimal.Decimal(str(value))
-    #                     except:
-    #                         pyValue = decimal.Decimal.from_float(float('nan'))
-    #                     if not pyValue.is_nan():
-    #                         pyResult = pyValue ** pyPower
-    #                     else:
-    #                         pyResult = "NaN-Python"
-    #                     logger.debug("Computed Python result %s of value %s ** power %s"%(pyResult,pyValue,pyPower))
-    #                     file_iterator.addResult(pyResultField+"_"+field, pyResult)    
-    #                     fldnum += 1
-    # 
-    #                     logger.debug("Adding R field %s"%(RResultField,))
-    #                     R.r.value = value
-    #                     # The JSON parser (used in displaying NMTK results) chokes on a NaN returned directly from R
-    #                     # becauce is doesn't recognize an unquoted NaN as numeric and sses it as a string without quotes
-    #                     R.voidEval('''
-    # result <- as.numeric(value) ** as.numeric(rpower)
-    # if (is.nan(result)||is.na(result)) result<-"Nan-R"
-    # ''')
-    #                     logger.debug("Computed R result %s of value %s ** power %s"%(R.r.result,R.r.value,R.r.power))
-    #                     file_iterator.addResult(RResultField+"_"+field,R.r.result)    
-    #                     fldnum += 1
-    #                 numcomp += fldnum
-    # 
-    #             client.updateStatus('Done with calculations')
-    #             logger.debug("Done computing results.")
-    # 
-    #         except Exception, e:
-    #             # if anything goes wrong we'll send over a failure status.
-    #             print e
-    #             logger.exception('Job Failed with Exception!')
-    #             client.updateResults(payload={'errors': [str(e),] },
-    #                                  failure=True)
-    #         finally:
-    #             del R
-    # 
-    #         # Since we are updating the data as we go along, we just need to return
-    #         # the data with the new column (results) which contains the result of the 
-    #         # model.
-    #         #result_field=setup['results']['chk_bin_hhsize']['value']
-    #         #units='HH size bins total check'
-    # 
-    #         client.updateResults(result_field=None,
-    #                          units=None,
-    #                          result_file='data',
-    #                          files={'data': ('data.{0}'.format(file_iterator.extension),
-    #                                          file_iterator.getDataFile(), 
-    #                                          file_iterator.content_type),
-    #                                 'summary': ('summary.csv',
-    #                                         summ_text, 
-    #                                         'text/csv')
-    #                                 })
+            # Remember that all parameters, regardless of their stated type, arrive
+            # in the tool as string representations (the promise is just that the
+            # string will probably convert successfully to the tool_config type).
+            # Thus all the computation code should perform idempotent conversions...
+            if compute_Python:
+                pyPower = decimal.Decimal(str(compute["power"]))
+            if compute_R:
+                R = pyRserve.connect()
+                R.r.rpower = compute["power"] # R.r.r...
+                # The JSON parser (used in displaying NMTK results) chokes on a NaN
+                # returned directly from R because it doesn't recognize an unquoted
+                # NaN as numeric and sees it as a string without quotes; We'll
+                # account for that in the R function and return a string
+                R.r("""
+                # Fun with R closure magic: convert the power from string to number
+                # once then embed that in a function and return the function, which
+                # we promptly call with the power to make the actual computational
+                # function.  Note parenthetical priorities...
+
+                compute <- (function(rp) {
+                    rpower <- as.numeric(rp)
+                    function(value) {
+                        result <- as.numeric(value) ** rpower
+                        if (is.nan(result)||is.na(result)) result<-"Nan-R"
+                        result
+                    }
+                })(rpower)
+                # Later, just call compute(value)
+                """, void=True)
+
+            else:
+                R = None
+
+            for row in compute_file: # Loop over the rows in the input file
+                for field, value in row.iteritems():
+                    if compute_Python:
+                        try:
+                            pyValue = decimal.Decimal(str(value))
+                        except:
+                            pyValue = decimal.Decimal.from_float(float('nan'))
+                        if not pyValue.is_nan():
+                            pyResult = pyValue ** pyPower
+                        else:
+                            pyResult = "NaN-Python"
+                        compute_file.addResult(compute["PythonName"]+"_"+field, pyResult)    
+                    if compute_R:
+                        Rresult = R.r.compute(value)
+                        logger.debug("Computed R result for field %s, Result %s of value %s ** power %s"%(field, Rresult,value,R.r.rpower))
+                        compute_file.addResult(compute["RName"]+"_"+field,Rresult)    
+            del R # closes the connection, or does nothing if R was not connected
+
+            client.updateStatus('Done with computations')
+
+            ###################################
+            # Rasterization
+
+            # If requested, take the input vector (either a supplied or default
+            # file) and pass it through the R rasterization
+
+            # Keep an R raster file (for use in imaging the raster) and also
+            # save out a raster image file (Erdas Imagine, or geoTIFF) if
+            # requested
+
+            ###################################
+            # Imaging
+
+            # If requested, take either the vector, the rasterized result or both
+            # and pass them through R 
+
+            ###################################
+            # Prepare results
+            outfiles = {}
+            main_result = "summary"
+            comp_result = "computations"
+
+            # Result files are a dictionary with a key (the multi-part POST slug),
+            # plus a 3-tuple consisting of the recommended file name, the file data,
+            # and a MIME type
+            outfiles[main_result] = ( 'summary.csv', config_summary.getvalue(), 'text/csv' )
+            if compute_R or compute_Python:
+                outfiles[comp_result] = ( 'computation.%s'%(compute_file.extension,), compute_file.getDataFile(), compute_file.content_type )
+
+            if outfiles:
+                client.updateResults(result_field=None,         # Default field to thematize in result_file
+                                     units=None,                # Text legend describing the units of 'result_field'
+                                     result_file=main_result,   # Supply the file 'key' (see outfiles above)
+                                     files=outfiles             # Dictionary of tuples providing result files
+                                 )
+
         except Exception as e:
-            msg = 'Failed to parse configuration file or data file.'
+            msg = 'Job failed.'
             logger.exception(msg)
             logger.exception(str(e))
             job.fail(msg)
