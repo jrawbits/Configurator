@@ -15,11 +15,12 @@ class ElementSet(dict):
     '''
     Wrap a few extra functions around a bare dictionary, including a constructor
     that will load a copy of the "config" dictionary keys (and REFERENCES to the
-    corresponding values).
+    correspondkdkd`ing values).
     '''
     def __init__(self,config):
         super(ElementSet, self).__init__() # Create a bare dictionary
-        self.update(config)                # update it with config key/value pairs
+        for k,v in config.iteritems():
+            self[k] = v.get("value",None)
 
     def addResult(self, field, value):
         '''
@@ -63,14 +64,14 @@ class FeatureSet(object):
         self.iterable_fields = {}
         self.constant_fields = {}
         for key,value in elements.iteritems():
-            if (value['property'] or value['type'] == 'property') and
+            if (value.get('property',False) or value['type'] == 'property') and \
                value.get('value', None) is not None:
                 self.iterable_fields[key] = value.get('value', None)
             else:
                 self.constant_fields[key] = value.get('value', None)
         if self.iterable_fields and self.file_data:
             self.data_parsed = json.loads(open(self.file_data).read())
-        elif constant_fields: # but no iterable fields
+        elif self.constant_fields: # but no iterable fields
             self.data_parsed = [ { "features" : {"properties" : self.constant_fields} } ]
         else:
             self.data_parsed = None
@@ -122,13 +123,15 @@ class ConfigManager(object):
     def __init__(self,input_files,tool_config):
         self._files = input_files   # names of files extracted from the POST
         self._config = tool_config  # the job analysis settings
-        self.client = client        # NMTK server for 
 
-        self._setup = self.setup()
+        self._setup = None
         self.failures = []
 
     def datafile(self,namespace):
-        return self._files[namespace][0]  # the location of the job's data file
+        if namespace in self._files:
+            return self._files[namespace][0]  # the location of the job's data file
+        else:
+            return None
 
     def cleanup(self):
         """
@@ -148,10 +151,11 @@ class ConfigManager(object):
                 if (not self._setup or not isinstance(self._setup, (dict))):
                     raise Exception('No analysis settings')
             except Exception as e:
+                logger.exception(str(e))
                 self.fail(str(e))
                 raise Exception('JSON load of posted job configuration failed')
             else:
-                logger.debug("Loaded config: %s", setup)
+                logger.debug("Loaded config: %s", self._setup)
         if namespace:
             return self._setup[namespace]
         else:
@@ -161,15 +165,19 @@ class ConfigManager(object):
         if not namespace:
             raise Exception("Missing namespace for JSON file")
         try:
-            file = json.loads(open(self.filename(namespace)).read())
+            filename = self.datafile(namespace)
+            if filename:
+                jsonfile = json.loads(open(filename).read())
+            else:
+                jsonfile = ""
         except Exception as e:
             self.fail(str(e))
             raise Exception("JSON load of file failed")
-        return file
+        return jsonfile
 
     @property
     def valid(self):
-        return self.setup and not self.failures
+        return self.setup() and not self.failures
 
     def getParameters(self,namespace):
         '''

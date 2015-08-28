@@ -33,21 +33,26 @@ def performModel(input_files,
     logger.debug("input_files: %s"%(input_files,))
     logger.debug("tool_config\n%s\n"%(tool_config,))
 
+    # Use exception handling to generate "error" result -- everything that
+    # doesn't generate good results should throw an exception
     # Use this extra syntax to ensure temporary files are promptly cleaned up
     # after tool execution.  With luck, the tool server will also do periodic
     # garbage collection on tools that don't pick up after themselves.
     with Config.Job(input_files,tool_config) as job:
-    
-        # Set up a master directory of error conditions and parameters
-        parameters = {}
-        compute = parameters["compute"] = {}
-        raster = parameters["raster"] = {}
-        image = parameters["image"] = {}
-
+        
         try:
+            # Initialize the job setup (cant do in __init__ or we need to try too hard)
+            job.setup()
+            # Set up a master directory of error conditions and parameters
+            parameters = {}
+            compute = parameters["compute"] = {}
+            raster = parameters["raster"] = {}
+            image = parameters["image"] = {}
+
             ########################################
             # Computation (Python/R)
             compute_factors = job.getParameters('computation_params')
+            logger.debug(compute_factors)
 
             #   Determine specific computational engines to use, if any
             computetype    = compute["type"] = compute_factors.get('computetype',"None")
@@ -57,13 +62,16 @@ def performModel(input_files,
                 compute_R      = compute["with_R"] = computetype in ['R','Both']
                 compute_Python = compute["with_Python"] = computetype in ['Python','Both']
 
-                computemsg = "Computation will occur using"
-                if compute_R:
-                    computemsg += " R"
+                if compute_R or compute_Python:
+                    computemsg = "Computation will occur using"
+                    if compute_R:
+                        computemsg += " R"
+                        if compute_Python:
+                            computemsg += " and"
                     if compute_Python:
-                        computemsg += " and"
-                if compute_Python:
-                    computemsg += " Python"
+                        computemsg += " Python"
+                else:
+                    computemsg = "Computation will not occur"
 
                 #   Determine parameter; default is to square it same as /tool_config
                 compute["raisetopower"] = compute_factors.get('raisetopower',2)
@@ -87,41 +95,40 @@ def performModel(input_files,
             #   Check if rasterization was requested
             dorasterize = raster["do"] = raster_factors.get('dorasterize',0)
 
-            # We're setting up rasterization manually (rather than via ConfigIterator)
-            # because we just need the 'value' property name and the file name for R
+            # Set up the default vector file (may need it later as well)
             default_vector_name = os.path.join(settings.STATIC_ROOT, "ALX_roads.json")
-            if dorasterize: # don't bother setting up unless rasterization requested
+            # Get the filename to rasterize, substituting in a default if no file is
+            # provided.  We won't load the file data since we're just going to hand
+            # the file path to R for processing.
+            try:
+                raster["vectorname"] = job.datafile['rasterize'] # the file name
+            except:  # No file provided, so we'll pull out the default
+                logger.debug("Using default vector file for rasterizing")
+                raster["vectorname"] = default_vector_name
 
-                # Get the filename to rasterize, substituting in a default if no file is
-                # provided.  We won't load the file data since we're just going to hand
-                # the file path to R for processing.
-                try:
-                    raster["vectorname"] = job.datafile['rasterize'] # the file name
-                except:  # No file provided, so we'll pull out the default
-                    raster["vectorname"] = default_vector_name
-
-                # Pull the rastervalue from the job configuration.  We don't care if it's
-                # a literal numeric value or a property name.  The R function to
-                # rasterize the file will use the value as a constant if provided, or
-                # will use a string as the name of a feature attribute to provide the
-                # raster value for that feature.
+            # Pull the rastervalue from the job configuration.  We don't care if it's
+            # a literal numeric value or a property name.  The R function to
+            # rasterize the file will use the value as a constant if provided, or
+            # will use a string as the name of a feature attribute to provide the
+            # raster value for that feature.
+            raster["value"] = 1
+            raster_value_set = job.getParameters('rasterize')
+            if "rastervalue" in raster_value_set:
+                raster["value"] = raster_value_set.get('value', 1)
+            else:
                 raster["value"] = 1
-                raster_value_set = job.getParameters('rasterize')
-                if "rastervalue" in raster_value_set:
-                    raster["value"] = raster_value_set.get('value', 1)
-                else:
-                    raster["value"] = 1
-                raster["x_dim"] = raster_value_set.get('raster_x',300)
-                raster["y_dim"] = raster_value_set.get('raster_y',300)
-                raster["proportional"] = raster_value_set.get('proportional',0)
-                raster["smoothing"] = raster_value_set.get('smoothing',0)
+            raster["x_dim"] = raster_value_set.get('raster_x',300)
+            raster["y_dim"] = raster_value_set.get('raster_y',300)
+            raster["proportional"] = raster_value_set.get('proportional',0)
+            raster["smoothing"] = raster_value_set.get('smoothing',0)
 
-                #   Set output format (Rdata, Erdas IMAGINE, geoTIFF)
-                raster_output = job.getParameters('rasterization_output')
-                raster["returnraster"] = raster_output.get('return_raster',"geoTIFF")
-                raster["returnvector"] = raster_output.get('return_vector',0)
-                raster["rastername"] = raster_output.get('raster_basename',"raster")
+            #   Set output format (Rdata, Erdas IMAGINE, geoTIFF)
+            raster_output = job.getParameters('rasterization_output')
+            raster["returnraster"] = raster_output.get('return_raster',"geoTIFF")
+            raster["returnvector"] = raster_output.get('return_vector',0)
+            raster["rastername"] = raster_output.get('raster_basename',"raster")
 
+            if dorasterize: # don't bother setting up unless rasterization requested
                 client.updateStatus('Rasterization successfully configured.')
             else:
                 client.updateStatus('Rasterization was not requested')
@@ -132,26 +139,13 @@ def performModel(input_files,
             image["vector"] = image_selection.get('imagevector',0)
             image["raster"] = image_selection.get('imageraster',0)
 
-            image_output = ConfigIterator(input_files,'imaging_output',setup)
+            image_output = job.getParameters('image_output')
             image["format"] = image_output.get('imageformat','PNG')
             if image["vector"] or image["raster"]:
                 client.updateStatus("Imaging successfully configured.")
             else:
                 client.updateStatus("Imaging was not requested.")
 
-        except Exception as e:
-            msg = 'Failed to parse configuration file or data file.'
-            logger.exception(msg)
-            logger.exception(str(e))
-            job.fail(msg)
-            job.fail(str(e))
-
-        if not job.valid:
-            client.updateResults(payload={'errors': job.failures },
-                                 failure=True,
-                                 files={}
-                                )
-        else:    
             client.updateStatus('Parameter & data file validation complete.')
 
             logger.debug("Parameter dictionary")
@@ -188,7 +182,7 @@ def performModel(input_files,
     #             if factor_iterator.iterable:
     #                 raise Exception('Factors cannot be iterable')
     #             else:
-    #                 # Extract the parameters
+                     # Extract the parameters
     #                 parameters=factor_iterator.data
     #                 power = parameters.get('power')
     #                 logger.debug("'power' is %s",power)
@@ -265,3 +259,13 @@ def performModel(input_files,
     #                                         summ_text, 
     #                                         'text/csv')
     #                                 })
+        except Exception as e:
+            msg = 'Failed to parse configuration file or data file.'
+            logger.exception(msg)
+            logger.exception(str(e))
+            job.fail(msg)
+            job.fail(str(e))
+            client.updateResults(payload={'errors': job.failures },
+                                 failure=True,
+                                 files={}
+                                )

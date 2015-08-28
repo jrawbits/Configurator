@@ -240,9 +240,9 @@ Data elements that will be transformed using the factors
 Data file that will be used for rasterization (must be spatial)
 """,
             "primary" : False,            # True if...
+            "required" : False,           # If true, an actual file must be provided
             "label" : "Data used for rasterization",
             # "spatial_types" : ["POLYGON","POINT","LINE"], # require specific spatial types
-            "required" : False,           # If true, an actual file must be provided
             "elements" : [
               {
                   "description" : """
@@ -321,11 +321,11 @@ Parameters that control how rasterization will be performed.
                   "name" : "raster_y"
               },
               {
-                  "description" : "If rasterizing a polygon file, show fraction of cell covered rather than all or nothing.",
+                  "description" : "If true and rasterizing a polygon file, show fraction of cell covered rather than all or nothing.",
                   "default" : 0,
                   "required" : True,
                   "label" : "Proportional Area",
-                  "type" : "numeric",
+                  "type" : "boolean",
                   "name" : "proportional"
               },
               {
