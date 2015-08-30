@@ -1,0 +1,4 @@
+917bc0cdd73875a5588527938da58710902291a3  Raster_Test.img
+fca5e6247fdfd5cde3d3df5c87b03d24981e1b6c  Raster_Test.tif
+02d53b787eaff4a6e34b44a420541813e54e3261  Some_Numbers.csv
+e3a7cd4720f9c88cbc84a79b655e033df66bae6b  Vector_Test.geojson
