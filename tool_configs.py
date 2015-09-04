@@ -214,10 +214,6 @@ of result fields or what result types they should expect.</li>
                     "type" : "property",
                     "value": "raiseme3",
                 },
-                "backstop" : {
-                    "type" : "string",
-                    "value": "Out of Power",
-                },
             },
             "rasterize": {
                 "rastervalue" : {
