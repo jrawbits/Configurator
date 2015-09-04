@@ -331,16 +331,6 @@ Data elements that will be transformed using the factors
                   "type" : "number",
                   "name" : "raiseme3"
               },
-              {
-                  "description" : "Sorry, you only get three data fields or we'll be here all day!",
-                  "default" : "",
-                  "display_if_filled" : "raiseme3",
-                  "required" : False,
-                  "readonly" : True,
-                  "label" : "Out Of Power",
-                  "type" : "string",
-                  "name" : "backstop"
-              },
             ],
         },
         {
