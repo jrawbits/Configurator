@@ -15,6 +15,6 @@ sudo service celeryd-nmtk start
 # Python tasks: rediscover tools, then close and restart Rserve
 source ../../venv/bin/activate
 python ../manage.py discover_tools
-python endRserve.py # No error if Rserve not runnign
+python endRserve.py # No error if Rserve not running
 # Run from the command line without redirect to debug
 R CMD Rserve > /dev/null

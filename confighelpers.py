@@ -80,7 +80,15 @@ class FeatureSet(object):
             else:
                 self.constant_fields[key] = value.get('value', None)
         if self.iterable_fields and self.file_data:
-            self.data_parsed = json.loads(open(self.file_data).read())
+            filedata = open(self.file_data).read()
+            parsed_data = json.loads(filedata)
+            # We're going to repackage the data if it's a list
+            if type(parsed_data) is list:
+                self.data_parsed = { "features" : [ { "properties" : row } for row in parsed_data ] }
+                self.isList = True
+            else:
+                self.data_parsed = parsed_data
+                self.isList = False
         elif self.constant_fields: # but no iterable fields
             # Reproduce a minimal "geo" JSON file with one feature
             # whose properties are the costant fields
@@ -95,7 +103,10 @@ class FeatureSet(object):
 
     def __iter__(self):
         if self.data_parsed:
-            self.file_iterator = iter(self.data_parsed['features'])
+            if type(self.data_parsed) is dict: # expect geoJSON like
+                self.file_iterator = iter(self.data_parsed['features'])
+            else:
+                raise Exception('Do not know how to parse type '+str(type(self.data_parsed)))
         else:
             self.file_iterator = None
         return self
@@ -131,7 +142,11 @@ class FeatureSet(object):
         return 'application/json'
 
     def getDataFile(self):
-        return json.dumps(self.data_parsed, cls=DjangoJSONEncoder)
+        if self.isList:
+            rows = [ row["properties"] for row in self.data_parsed['features'] ]
+            return json.dumps(rows, cls=DjangoJSONEncoder)
+        else:
+            return json.dumps(self.data_parsed, cls=DjangoJSONEncoder)
 
 class ConfigManager(object):
     def __init__(self,input_files,tool_config):

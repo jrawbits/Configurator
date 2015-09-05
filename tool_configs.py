@@ -179,7 +179,7 @@ of result fields or what result types they should expect.</li>
             # (see checksums.txt in the static section of the Configurator web
             # space).
             {
-                "namespace":"configuration",
+                "namespace":"computation",
                 "checksum": "02d53b787eaff4a6e34b44a420541813e54e3261",
                 "uri": "/static/Configurator/Some_Numbers.csv",
                 "content-type":"text/csv"
@@ -223,8 +223,8 @@ of result fields or what result types they should expect.</li>
             },
             "computation_params": {
                 "raisetopower" : {
-                    "type" : "boolean",
-                    "value": 1,
+                    "type" : "numeric",
+                    "value": 2,
                 },
                 "computetype" : {
                     "type" : "string",
