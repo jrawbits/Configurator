@@ -99,7 +99,7 @@ def performModel(input_files,
             dorasterize = raster["do"] = raster_factors.get('dorasterize',0)
 
             # Set up the default vector file (may need it later as well)
-            default_vector_name = os.path.join(settings.STATIC_ROOT, "ALX_roads.json")
+            default_vector_name = os.path.join(settings.STATIC_ROOT, "Vector_Test.geojson")
             # Get the filename to rasterize, substituting in a default if no file is
             # provided.  We won't load the file data since we're just going to hand
             # the file path to R for processing.
