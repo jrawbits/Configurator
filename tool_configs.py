@@ -542,7 +542,7 @@ is requested but no input is provided).
         "namespace":"image_output",
         "label":"Image Output",
         "description":"""
-If you requested images, you can set the format that will be returned here from a list of supported types (plus
+If you requested images, you can set the format that will be returned here from a couple of supported types (plus
 one unsupported type, PDF, that can be downloaded but not viewed).
 """,
         "elements":[
@@ -552,7 +552,7 @@ Select the output format for the image versions of shapefiles or rasters that yo
 will be generated in the same format.
 """,
             "default":"PNG",
-            "choices" : ["PNG","JPG","GIF","PDF (Download Only)"],
+            "choices" : ["PNG","JPG","PDF (Download Only)"],
             "required":True,
             "label":"Image Format",
             "type":"string",

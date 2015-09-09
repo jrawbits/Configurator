@@ -13,10 +13,12 @@ import pyRserve
 import csv
 import cStringIO as StringIO
 
-def getPythonValue(value,power):
-    pass
-def getRValue(value,power):
-    pass
+ImageFormatTable = {
+    "PDF" : { "R-device" : "pdf",  "mimetype" : "application/pdf", "extension" : "pdf"},
+    "PNG" : { "R-device" : "png",  "mimetype" : "image/png",       "extension" : "png"},
+    "JPG" : { "R-device" : "jpeg", "mimetype" : "image/jpeg",      "extension" : "jpg"},
+    }
+
 
 @task(ignore_result=False)
 def performModel(input_files,
@@ -38,6 +40,9 @@ def performModel(input_files,
     # 'with' syntax to ensure temporary files are promptly cleaned up after tool
     # execution.  With luck, the tool server will also do periodic garbage
     # collection on tools that don't pick up after themselves.
+
+    # Prepare a connection to R
+    R = None
 
     with Config.Job(input_files,tool_config) as job:
         
@@ -99,13 +104,15 @@ def performModel(input_files,
             dorasterize = raster["do"] = raster_factors.get('dorasterize',0)
 
             # Set up the default vector file (may need it later as well)
-            default_vector_name = os.path.join(settings.STATIC_ROOT, "ALX_roads.json")
+            default_vector_name = os.path.join(settings.STATIC_ROOT, "Configurator/Vector_Test.geojson")
             # Get the filename to rasterize, substituting in a default if no file is
             # provided.  We won't load the file data since we're just going to hand
             # the file path to R for processing.
             try:
-                raster["vectorname"] = job.datafile['rasterize'] # the file name
-            except:  # No file provided, so we'll pull out the default
+                logger.debug("File: %s"%(job.datafile('rasterize')))
+                raster["vectorname"] = job.datafile('rasterize') # the file name
+            except Exception as e:  # No file provided, so we'll pull out the default
+                logger.debug(str(e))
                 logger.debug("Using default vector file for rasterizing")
                 raster["vectorname"] = default_vector_name
 
@@ -143,7 +150,13 @@ def performModel(input_files,
             image["raster"] = image_selection.get('imageraster',0)
 
             image_output = job.getParameters('image_output')
-            image["format"] = image_output.get('imageformat','PNG')
+            image["format"] = image_output["imageformat"]
+            imageformat = ImageFormatTable.get(image["format"][0:3],{})
+            if not imageformat:
+                # Unknown format, don't do images
+                image["vector"] = image["raster"] = 0
+                msg = "Invalid image format: %s (%s)"%(image["format"],image["format"][0:3])
+                client.updateStatus(msg)
             if image["vector"] or image["raster"]:
                 client.updateStatus("Imaging successfully configured.")
             else:
@@ -205,9 +218,6 @@ def performModel(input_files,
                 # Later, just call compute(value)
                 """, void=True)
 
-            else:
-                R = None
-
             for row in compute_file: # Loop over the rows in the input file
                 for field, value in row.iteritems():
                     if compute_Python:
@@ -224,7 +234,9 @@ def performModel(input_files,
                         Rresult = R.r.compute(value)
                         logger.debug("Computed R result for field %s, Result %s of value %s ** power %s"%(field, Rresult,value,R.r.rpower))
                         compute_file.addResult(compute["RName"]+"_"+field,Rresult)    
-            del R # closes the connection, or does nothing if R was not connected
+
+            if R:
+                R.close()
 
             client.updateStatus('Done with computations')
 
@@ -233,6 +245,8 @@ def performModel(input_files,
 
             # If requested, take the input vector (either a supplied or default
             # file) and pass it through the R rasterization
+            # If NOT requested, but imaging of a raster was presented, just
+            # use the default raster from the world of static data
 
             # Keep an R raster file (for use in imaging the raster) and also
             # save out a raster image file (Erdas Imagine, or geoTIFF) if
@@ -242,13 +256,62 @@ def performModel(input_files,
             # Imaging
 
             # If requested, take either the vector, the rasterized result or both
-            # and pass them through R 
+            # and pass them through R
+
+            # Image file is raster["vectorname"]
+            if image["vector"] or image["raster"]:
+                if not R:
+                    R = pyRserve.connect()
+                else:
+                    R.connect()
+                # TODO: Include basic plot parameters (e.g title of what we're plotting)
+                R.r.plotformat = imageformat["R-device"] # Select R image output device
+                R.r("""
+                plotfunc <- function(to.plot, outfile) {
+                    plotdev <- get(plotformat)
+                    plotdev(file=outfile)
+                    plot(to.plot)
+                    dev.off()
+                }
+                """,void=True)
+
+                image["vectorplot"] = ""
+                if image["vector"]:
+                    try:
+                        R.r.plotfile = raster["vectorname"]
+                        R.r("""
+                        library(sp)
+                        library(rgdal)
+                        to.plot <- readOGR(plotfile,layer="OGRGeoJSON")
+                        """,void=True)
+                        R.r.outfile = image["vectorplot"] = os.tempnam()
+                        R.r("""
+                        plotfunc(to.plot,outfile)
+                        """,void=True)
+                    except Exception as e:
+                        logger.debug(str(e))
+                        client.updateStatus('Imaging failure(vector): '+str(e))
+
+#                 if image["raster"]:
+#                     try:
+#                         R.r.plotfile = raster["rastername"]
+#                         R.r("""
+#                         library(raster)
+#                         to.plot <- read.raster(plotfile)
+#                         """
+#                         image["rasterplot"] = plotInR()
+#                     except Exception as e:
+#                         logger.debug(str(e))
+#                         client.updateStatus('Imaging failure(raster): '+str(e))
+
+                R.close()
 
             ###################################
             # Prepare results
             outfiles = {}
             main_result = "summary"
             comp_result = "computations"
+            vector_plot = "vectorplot"
 
             # Result files are a dictionary with a key (the multi-part POST slug),
             # plus a 3-tuple consisting of the recommended file name, the file data,
@@ -256,6 +319,17 @@ def performModel(input_files,
             outfiles[main_result] = ( 'summary.csv', config_summary.getvalue(), 'text/csv' )
             if compute_R or compute_Python:
                 outfiles[comp_result] = ( 'computation.%s'%(compute_file.extension,), compute_file.getDataFile(), compute_file.content_type )
+            if image["vectorplot"]:
+                try:
+                    vecimg = open(image["vectorplot"],"rb")
+                    outfiles[vector_plot] = ( 'vectorplot.%s'%(imageformat["extension"],), vecimg.read(), imageformat["mimetype"] )
+                    vecimg.close()
+                    R.connect() # There should be an R if we generated image["vectorplot"]
+                    R.r.unlink(image["vectorplot"]) # Get R to unlink the temporary file so we have permission
+                    R.close()
+                except Exception as e:
+                    logger.debug(str(e))
+                    client.updateStatus("Preparing image output file failed: "+str(e))
 
             if outfiles:
                 client.updateResults(result_field=None,         # Default field to thematize in result_file
@@ -274,3 +348,6 @@ def performModel(input_files,
                                  failure=True,
                                  files={}
                                 )
+
+    # Clean up R after all is done
+    del R
