@@ -162,6 +162,8 @@ def performModel(input_files,
             else:
                 client.updateStatus("Imaging was not requested.")
 
+            image["rastername"] = default_raster_file = os.path.join(settings.STATIC_ROOT, "Configurator/Raster_Test.tif")
+
             client.updateStatus('Parameter & data file validation complete.')
 
             ###################################
@@ -252,6 +254,12 @@ def performModel(input_files,
             # save out a raster image file (Erdas Imagine, or geoTIFF) if
             # requested
 
+            # image["rastername"] is the name of the raster that will
+            # be imaged (internal).  It is set to a default file
+            # above, but should be replaced by the temp file into
+            # which R will place a rasterized version of the vector
+            # input.
+
             ###################################
             # Imaging
 
@@ -276,6 +284,7 @@ def performModel(input_files,
                 """,void=True)
 
                 image["vectorplot"] = ""
+                image["rasterplot"] = ""
                 if image["vector"]:
                     try:
                         R.r.plotfile = raster["vectorname"]
@@ -292,17 +301,20 @@ def performModel(input_files,
                         logger.debug(str(e))
                         client.updateStatus('Imaging failure(vector): '+str(e))
 
-#                 if image["raster"]:
-#                     try:
-#                         R.r.plotfile = raster["rastername"]
-#                         R.r("""
-#                         library(raster)
-#                         to.plot <- read.raster(plotfile)
-#                         """
-#                         image["rasterplot"] = plotInR()
-#                     except Exception as e:
-#                         logger.debug(str(e))
-#                         client.updateStatus('Imaging failure(raster): '+str(e))
+                if image["raster"]:
+                    try:
+                        R.r.plotfile = image["rastername"]
+                        R.r("""
+                        library(raster)
+                        to.plot <- raster(plotfile)
+                        """
+                        R.r.outfile = image["rasterplot"] = os.tempnam()
+                        R.r("""
+                        plotfunc(to.plot,outfile)
+                        """,void=True)
+                    except Exception as e:
+                        logger.debug(str(e))
+                        client.updateStatus('Imaging failure(raster): '+str(e))
 
                 R.close()
 
@@ -312,6 +324,7 @@ def performModel(input_files,
             main_result = "summary"
             comp_result = "computations"
             vector_plot = "vectorplot"
+            raster_plot = "rasterplot"
 
             # Result files are a dictionary with a key (the multi-part POST slug),
             # plus a 3-tuple consisting of the recommended file name, the file data,
@@ -329,7 +342,18 @@ def performModel(input_files,
                     R.close()
                 except Exception as e:
                     logger.debug(str(e))
-                    client.updateStatus("Preparing image output file failed: "+str(e))
+                    client.updateStatus("Preparing vector image output file failed: "+str(e))
+            if image["rasterplot"]:
+                try:
+                    rstimg = open(image["rasterplot"],"rb")
+                    outfiles[raster_plot] = ( 'rasterplot.%s'%(imageformat["extension"],), vecimg.read(), imageformat["mimetype"] )
+                    rstimg.close()
+                    R.connect() # There should be an R if we generated image["vectorplot"]
+                    R.r.unlink(image["rasterplot"]) # Get R to unlink the temporary file so we have permission
+                    R.close()
+                except Exception as e:
+                    logger.debug(str(e))
+                    client.updateStatus("Preparing raster image output file failed: "+str(e))
 
             if outfiles:
                 client.updateResults(result_field=None,         # Default field to thematize in result_file
