@@ -307,7 +307,7 @@ def performModel(input_files,
                         R.r("""
                         library(raster)
                         to.plot <- raster(plotfile)
-                        """
+                        """)
                         R.r.outfile = image["rasterplot"] = os.tempnam()
                         R.r("""
                         plotfunc(to.plot,outfile)
