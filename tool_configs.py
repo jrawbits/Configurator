@@ -548,7 +548,7 @@ one unsupported type, PDF, that can be downloaded but not viewed).
         "elements":[
           {
             "description":"""
-Select the output format for the image versions of shapefiles or rasters that you may have requested.  All images
+Select the output format for the image versions of vectors or rasters that you may have requested.  All images
 will be generated in the same format.
 """,
             "default":"PNG",
