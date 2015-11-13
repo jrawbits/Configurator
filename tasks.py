@@ -13,10 +13,33 @@ import pyRserve
 import csv
 import cStringIO as StringIO
 
+# This contains necessary metadata about supported output formats
 ImageFormatTable = {
     "PDF" : { "R-device" : "pdf",  "mimetype" : "application/pdf", "extension" : "pdf"},
     "PNG" : { "R-device" : "png",  "mimetype" : "image/png",       "extension" : "png"},
     "JPG" : { "R-device" : "jpeg", "mimetype" : "image/jpeg",      "extension" : "jpg"},
+    }
+
+# Raster Format Table needs to provide:
+#   "File": The base file system name for the generated file (with extension); it will be appended
+#           to a temporary folder path unique for this application
+#   "Load": An R function definition template using % expansion for the base file name to load
+#           a raster dataset from a file in this format,
+#   "Save": An R function definition template using % expansion for the base file name to save the
+#           raster dataset to a file in this format
+RasterFormatTable = {
+    "geoTIFF" :                     { "extension" : ".tif",
+                                      "mimetype" : "image/tiff",
+                                      "save" : "savefunc<-function(obj){writeRaster(obj,filename='%s',format='GTiff',overwrite=TRUE)}",
+                                      "load" : "loadfunc<-function(){raster('%s')}" },
+    "Erdas Imagine Images (.img)" : { "extension" : ".img",
+                                      "mimetype" : "application/octet-stream",
+                                      "save" : "savefunc<-function(obj){writeRaster(obj,filename='%s',format='HFA',overwrite=TRUE)}",
+                                      "load" : "loadfunc<-function(){raster('%s')}" },
+    "RData" :                       { "extension" : ".rds",
+                                      "mimetype" : "application/octet-stream",
+                                      "save" : "savefunc<-function(obj){saveRDS(obj,'%s')}",
+                                      "load" : "loadfunc<-function(){con<-gzfile('%s'); obj<-readRDS(con); close(con); obj}" },
     }
 
 
@@ -100,21 +123,23 @@ def performModel(input_files,
             # Rasterization (desired, input file provided, default to use instead)
             raster_factors = job.getParameters('rasterization_params')
 
-            #   Check if rasterization was requested
-            dorasterize = raster["do"] = raster_factors.get('dorasterize',0)
-
-            # Set up the default vector file (may need it later as well)
+            # Set up the default files
             default_vector_name = os.path.join(settings.STATIC_ROOT, "Configurator/Vector_Test.geojson")
+            default_raster_file = os.path.join(settings.STATIC_ROOT, "Configurator/Raster_Test.tif")
+
+            #   Check if rasterization was requested
+            raster["do"] = raster_factors.get('dorasterize',0)
+
             # Get the filename to rasterize, substituting in a default if no file is
             # provided.  We won't load the file data since we're just going to hand
             # the file path to R for processing.
             try:
                 logger.debug("File: %s"%(job.datafile('rasterize')))
-                raster["vectorname"] = job.datafile('rasterize') # the file name
+                raster["vectorfile"] = job.datafile('rasterize') # the file name
             except Exception as e:  # No file provided, so we'll pull out the default
                 logger.debug(str(e))
                 logger.debug("Using default vector file for rasterizing")
-                raster["vectorname"] = default_vector_name
+                raster["vectorfile"] = default_vector_name
 
             # Pull the rastervalue from the job configuration.  We don't care if it's
             # a literal numeric value or a property name.  The R function to
@@ -124,21 +149,44 @@ def performModel(input_files,
             raster["value"] = 1
             raster_value_set = job.getParameters('rasterize')
             if "rastervalue" in raster_value_set:
-                raster["value"] = raster_value_set.get('value', 1)
+                raster["value"] = raster_value_set.get('rastervalue', 1)
             else:
                 raster["value"] = 1
             raster["x_dim"] = raster_value_set.get('raster_x',300)
             raster["y_dim"] = raster_value_set.get('raster_y',300)
-            raster["proportional"] = raster_value_set.get('proportional',0)
-            raster["smoothing"] = raster_value_set.get('smoothing',0)
+            # raster["proportional"] = raster_value_set.get('proportional',0)
+            # raster["smoothing"] = raster_value_set.get('smoothing',0)
 
-            #   Set output format (Rdata, Erdas IMAGINE, geoTIFF)
+            #   Set output format (Rdata-RDS, Erdas IMAGINE, geoTIFF)
             raster_output = job.getParameters('rasterization_output')
-            raster["returnraster"] = raster_output.get('return_raster',"geoTIFF")
             raster["returnvector"] = raster_output.get('return_vector',0)
-            raster["rastername"] = raster_output.get('raster_basename',"raster")
+            raster["format"] = raster_output.get('return_raster',"geoTIFF")
+            rasterformat = RasterFormatTable.get(raster["format"],{})
+            if not rasterformat:  # Did not request return of raster
+                raster["returnraster"] = 0
+                msg = "Invalid raster format %s"%(raster["format"],)
+                client.UpdateStatus(msg)
+                raster["rasterfile"] = ""
+                raster["mimetype"] = ""
+                raster["displayname"] = ""
+                raster["savefunc"] = ""
+                raster["loadfunc"] = ""
+            else:
+                raster["returnraster"] = 1
+                rasterbasename = raster_output.get('raster_basename','raster')
+                if not raster["do"]:
+                    raster["format"] = "geoTIFF"
+                    rasterformat = RasterFormatTable.get(raster["format"],{})
+                raster["rasterfile"] = os.tempnam()+rasterformat["extension"]
+                raster["mimetype"] = rasterformat["mimetype"]
+                raster["displayname"] = rasterbasename + rasterformat["extension"]     # The name to offer when the raw raster is sent back
+                if raster["do"]:
+                    raster["savefunc"] = rasterformat["save"]%(raster["rasterfile"],)  # R Function to save a dataset to rastername in selected format
+                else:
+                    raster["savefunc"] = "savefunc<-function(obj){invisible(0)}"       # don't save over default file (shouldn't call, but just in case!)
+                raster["loadfunc"] = rasterformat["load"]%(raster["rasterfile"],)      # R Function to load a raster for plotting
 
-            if dorasterize: # don't bother setting up unless rasterization requested
+            if raster["do"]: # don't bother setting up unless rasterization requested
                 client.updateStatus('Rasterization successfully configured.')
             else:
                 client.updateStatus('Rasterization was not requested')
@@ -161,8 +209,6 @@ def performModel(input_files,
                 client.updateStatus("Imaging successfully configured.")
             else:
                 client.updateStatus("Imaging was not requested.")
-
-            image["rastername"] = default_raster_file = os.path.join(settings.STATIC_ROOT, "Configurator/Raster_Test.tif")
 
             client.updateStatus('Parameter & data file validation complete.')
 
@@ -187,6 +233,7 @@ def performModel(input_files,
                         )
             del dw
 
+
             ###################################
             # Computation
 
@@ -197,7 +244,10 @@ def performModel(input_files,
             if compute_Python:
                 pyPower = decimal.Decimal(str(compute["power"]))
             if compute_R:
-                R = pyRserve.connect()
+                if not R:
+                    R = pyRserve.connect()
+                else:
+                    R.connect()
                 R.r.rpower = compute["power"] # R.r.r...
                 # The JSON parser (used in displaying NMTK results) chokes on a NaN
                 # returned directly from R because it doesn't recognize an unquoted
@@ -236,10 +286,9 @@ def performModel(input_files,
                         Rresult = R.r.compute(value)
                         logger.debug("Computed R result for field %s, Result %s of value %s ** power %s"%(field, Rresult,value,R.r.rpower))
                         compute_file.addResult(compute["RName"]+"_"+field,Rresult)    
-
             if R:
                 R.close()
-
+            
             client.updateStatus('Done with computations')
 
             ###################################
@@ -250,15 +299,35 @@ def performModel(input_files,
             # If NOT requested, but imaging of a raster was presented, just
             # use the default raster from the world of static data
 
-            # Keep an R raster file (for use in imaging the raster) and also
-            # save out a raster image file (Erdas Imagine, or geoTIFF) if
-            # requested
-
-            # image["rastername"] is the name of the raster that will
-            # be imaged (internal).  It is set to a default file
-            # above, but should be replaced by the temp file into
-            # which R will place a rasterized version of the vector
-            # input.
+            if raster["do"]:
+                if not R:
+                    R = pyRserve.connect()
+                else:
+                    R.connect()
+                R.r.vectorfile = raster["vectorfile"] # File to rasterize
+                # Note that output file is built into "savefunc"
+                R.r.xdim = raster["x_dim"]  # Desired raster resolution, x and y
+                R.r.ydim = raster["y_dim"]
+                R.r.rastervalue = raster["value"] # Value for raster cells,  either text/fieldname or numeric value
+                R.r(raster["savefunc"]) # Load the function to save the raster in desired format
+                # Actions:
+                #   Load vector file
+                #   Create extent from the file
+                #   Create a blank raster with the right resolution (use default values)
+                #   Rasterize the input file; raster.field can flexibly be a field name or a value
+                #   Write it out in a suitable format for later plotting
+                R.r("""
+                    require(rgdal)
+                    require(sp)
+                    require(raster)
+                    input.file <- readOGR(vectorfile,layer="OGRGeoJSON")
+                    e <- extent(input.file)
+                    t <- raster(e,nrows=ydim,ncols=ydim)
+                    rsa <- rasterize(input.file,t,field=rastervalue)
+                    savefunc(rsa)
+                    """, void=True)
+                if R:
+                    R.close()
 
             ###################################
             # Imaging
@@ -266,7 +335,9 @@ def performModel(input_files,
             # If requested, take either the vector, the rasterized result or both
             # and pass them through R
 
-            # Image file is raster["vectorname"]
+            # Image file is raster["vectorfile"]
+            image["vectorplotfile"] = ""
+            image["rasterplotfile"] = ""
             if image["vector"] or image["raster"]:
                 if not R:
                     R = pyRserve.connect()
@@ -283,18 +354,14 @@ def performModel(input_files,
                 }
                 """,void=True)
 
-                image["vectorplot"] = ""
-                image["rasterplot"] = ""
                 if image["vector"]:
                     try:
-                        R.r.plotfile = raster["vectorname"]
+                        R.r.plotfile = raster["vectorfile"]
+                        R.r.outfile = image["vectorplotfile"] = os.tempnam()
                         R.r("""
                         library(sp)
                         library(rgdal)
                         to.plot <- readOGR(plotfile,layer="OGRGeoJSON")
-                        """,void=True)
-                        R.r.outfile = image["vectorplot"] = os.tempnam()
-                        R.r("""
                         plotfunc(to.plot,outfile)
                         """,void=True)
                     except Exception as e:
@@ -303,28 +370,29 @@ def performModel(input_files,
 
                 if image["raster"]:
                     try:
-                        R.r.plotfile = image["rastername"]
+                        # Change to use RasterFormatTable Load function to obtain the to.plot dataset
+                        R.r(raster["loadfunc"]) # install load function for raster in requested format
+                        R.r.outfile = image["rasterplotfile"] = os.tempnam()
                         R.r("""
                         library(raster)
-                        to.plot <- raster(plotfile)
-                        """)
-                        R.r.outfile = image["rasterplot"] = os.tempnam()
-                        R.r("""
+                        to.plot <- loadfunc()
                         plotfunc(to.plot,outfile)
                         """,void=True)
                     except Exception as e:
                         logger.debug(str(e))
                         client.updateStatus('Imaging failure(raster): '+str(e))
-
-                R.close()
+                if R:
+                    R.close()
 
             ###################################
             # Prepare results
             outfiles = {}
             main_result = "summary"
             comp_result = "computations"
-            vector_plot = "vectorplot"
-            raster_plot = "rasterplot"
+            vector_input = "vectorinput"
+            raster_file = "rasterfile"
+            vector_plot = "vectorplotfile"
+            raster_plot = "rasterplotfile"
 
             # Result files are a dictionary with a key (the multi-part POST slug),
             # plus a 3-tuple consisting of the recommended file name, the file data,
@@ -332,25 +400,55 @@ def performModel(input_files,
             outfiles[main_result] = ( 'summary.csv', config_summary.getvalue(), 'text/csv' )
             if compute_R or compute_Python:
                 outfiles[comp_result] = ( 'computation.%s'%(compute_file.extension,), compute_file.getDataFile(), compute_file.content_type )
-            if image["vectorplot"]:
+
+            if image["vectorplotfile"] or raster["do"] or image["rasterplotfile"]:
+                # There really should always be an "R" in this case
+                if not R:
+                    R = pyRserve.connect()
+                else:
+                    R.connect()
+
+            if raster["returnvector"]:
                 try:
-                    vecimg = open(image["vectorplot"],"rb")
+                    vecbase = open(raster["vectorfile"])
+                    outfiles[vector_input] = ( "vectorbase.geojson", vecbase.read(), "application/json" )
+                    client.updateStatus('Returning input vector file as geojson')
+                    vecbase.close()
+                except Exception as e:
+                    logger.debug(str(e))
+                    client.updateStatus('Return vector failure: '+str(e))
+            if image["vectorplotfile"]:
+                try:
+                    vecimg = open(image["vectorplotfile"],"rb")
                     outfiles[vector_plot] = ( 'vectorplot.%s'%(imageformat["extension"],), vecimg.read(), imageformat["mimetype"] )
                     vecimg.close()
-                    R.connect() # There should be an R if we generated image["vectorplot"]
-                    R.r.unlink(image["vectorplot"]) # Get R to unlink the temporary file so we have permission
-                    R.close()
+                    client.updateStatus("Removing temporary vector file: "+image["vectorplotfile"])
+                    R.r.unlink(image["vectorplotfile"]) # Get R to unlink the temporary file so we have permission
                 except Exception as e:
                     logger.debug(str(e))
                     client.updateStatus("Preparing vector image output file failed: "+str(e))
-            if image["rasterplot"]:
+            if raster["returnraster"]: # if we are expected to return a raster
                 try:
-                    rstimg = open(image["rasterplot"],"rb")
-                    outfiles[raster_plot] = ( 'rasterplot.%s'%(imageformat["extension"],), vecimg.read(), imageformat["mimetype"] )
+                    rasterfile = open(raster["rasterfile"],"rb")
+                    outfiles[raster_file] = ( raster["displayname"], rasterfile.read(), raster["mimetype"] )
+                    rasterfile.close()
+                except Exception as e:
+                    logger.debug(str(e))
+                    client.updateStatus("Preparing raw raster output file failed: "+str(e))
+            if raster["do"]: # clean up the temporary rasterization file (may have done this without return raw file)
+                try:
+                    client.updateStatus("Removing temporary raster file: "+raster["rasterfile"])
+                    R.r.unlink(raster["rasterfile"]) # Get R to unlink the temporary file so we have permission
+                except Exception as e:
+                    logger.debug(str(e))
+                    client.updateStatus("Preparing raw raster output file failed: "+str(e))
+            if image["rasterplotfile"]:
+                try:
+                    rstimg = open(image["rasterplotfile"],"rb")
+                    outfiles[raster_plot] = ( 'rasterplot.%s'%(imageformat["extension"],), rstimg.read(), imageformat["mimetype"] )
                     rstimg.close()
-                    R.connect() # There should be an R if we generated image["vectorplot"]
-                    R.r.unlink(image["rasterplot"]) # Get R to unlink the temporary file so we have permission
-                    R.close()
+                    client.updateStatus("Removing temporary raster file: "+image["rasterplotfile"])
+                    R.r.unlink(image["rasterplotfile"]) # Get R to unlink the temporary file so we have permission
                 except Exception as e:
                     logger.debug(str(e))
                     client.updateStatus("Preparing raster image output file failed: "+str(e))
@@ -361,6 +459,8 @@ def performModel(input_files,
                                      result_file=main_result,   # Supply the file 'key' (see outfiles above)
                                      files=outfiles             # Dictionary of tuples providing result files
                                  )
+            if R:
+                R.close()
 
         except Exception as e:
             msg = 'Job failed.'
@@ -373,5 +473,6 @@ def performModel(input_files,
                                  files={}
                                 )
 
-    # Clean up R after all is done
+    # Clean up R after all is done (harmless if R is None, cleans up
+    # connection to Rserve otherwise)
     del R
