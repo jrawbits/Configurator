@@ -5,7 +5,7 @@ import datetime
 
 # For this specific tool, we import the following helpers
 from django.conf import settings
-import confighelpers as Config
+import NMTK_apps.helpers.confighelpers as Config
 import decimal
 import os
 import pyRserve
